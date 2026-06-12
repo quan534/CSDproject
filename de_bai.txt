@@ -1,0 +1,6 @@
+Social Network Friend Suggestion - Quản lý mạng lưới người dung 
+va goi ý ban be dua tren số lượng bạn chung.
+
+Array/List: Luu tru danh sach nguoi dung co ban.
+Binary Search Tree (BST): Tim kiem thong tin nguoi dung nhanh chong 
+theo ID.
