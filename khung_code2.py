@@ -23,25 +23,15 @@ class User:
         return f"User({self.user_id}, {self.name}, {self.age}, {self.location})"
 
     def to_dict(self) -> dict:
-        """
-        Chuyển User thành dict để xuất JSON/CSV.
+        # return một dict với keys, values tương ứng là tên các attributes và giá trị của nó của của đối tượng user
+        return {"user_id": self.user_id, "name": self.name, "age": self.age, "location": self.location, "interests": self.interests}
 
-        Returns:
-            dict: {"user_id": ..., "name": ..., "age": ..., ...}
-        """
         pass
 
     @staticmethod
     def from_dict(data: dict) -> "User":
-        """
-        Tạo User từ dict (dùng khi import file).
-
-        Args:
-            data (dict): dict chứa các field của User
-
-        Returns:
-            User: object User mới
-        """
+        # Tạo User từ dict (dùng khi import file).
+        return User(data["user_id"],data["name"],data["age"],data["location"],data["interests"])
         pass
 
 
