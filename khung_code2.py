@@ -796,94 +796,601 @@ import json
 import csv
 import random
 import time
-
+from datetime import datetime
+from user_manager import UserManager, User
 
 class DataManager:
     """
-    Import/Export dữ liệu và sinh dữ liệu mẫu để demo.
+    Quản lý Import / Export dữ liệu và sinh dữ liệu mẫu.
+
+    Chức năng:
+    - Export JSON
+    - Import JSON
+    - Export CSV
+    - Import CSV
+    - Generate Sample Data
     """
 
-    SAMPLE_NAMES     = ["An", "Bình", "Chi", "Duy", "Em", "Phong", "Giang",
-                        "Hà", "Ivy", "Khánh", "Lan", "Minh", "Nam", "Oanh"]
-    SAMPLE_LOCATIONS = ["HCM", "HN", "ĐN", "Cần Thơ", "Huế"]
-    SAMPLE_INTERESTS = ["music", "travel", "gaming", "cooking", "sports",
-                        "reading", "photography", "coding", "movies", "art"]
+    SAMPLE_NAMES = [
+        "An","Bình","Chi","Duy","Em","Phong","Giang","Hà","Ivy","Khánh",
+        "Lan","Minh","Nam","Oanh","Quang","Sơn","Trang","Tuấn","Vy","Yến"
+    ]
+
+    SAMPLE_LOCATIONS = [
+        "HCM",
+        "HN",
+        "Đà Nẵng",
+        "Huế",
+        "Cần Thơ",
+        "Hải Phòng",
+        "Bình Dương"
+    ]
+
+    SAMPLE_INTERESTS = [
+        "music",
+        "travel",
+        "gaming",
+        "coding",
+        "movies",
+        "sports",
+        "reading",
+        "photography",
+        "cooking",
+        "art"
+    ]
 
     def __init__(self, user_manager: UserManager):
         self._um = user_manager
 
+    # ==========================================================
+    # EXPORT JSON
+    # ==========================================================
+
     def export_json(self, filepath: str) -> bool:
-        """
-        Xuất toàn bộ dữ liệu (users + friendships) ra file JSON.
 
-        Args:
-            filepath (str): đường dẫn file output, VD "data/network.json"
+        try:
 
-        Returns:
-            bool: True nếu xuất thành công
+            users = self._um.get_all_users()
+            users_data = [u.to_dict() for u in users]
+            graph = self._um.get_graph()
 
-        Output format:
-            {
-                "users": [ {user fields...}, ... ],
-                "friendships": [ [id1, id2], ... ],
-                "exported_at": "ISO timestamp"
+            data = {
+                "users": users_data,
+                "friendships": graph.get_all_edges(),
+                "exported_at": datetime.now().isoformat()
             }
-        """
-        pass
 
-    def import_json(self, filepath: str) -> dict:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(
+                    data,
+                    f,
+                    ensure_ascii=False,
+                    indent=4
+                )
+
+            return True
+
+        except Exception as e:
+            print("Export JSON Error:", e)
+            return False
+
+    # ==========================================================
+    # IMPORT JSON
+    # ==========================================================
+    def import_json(self, filepath: str) ->dict:
+
+        try:
+
+            with open(filepath,"r",encoding="utf-8") as f:
+
+                data=json.load(f)
+
+            users_loaded=0
+
+            friendships_loaded=0
+
+            # -----------------------------
+            # Xóa dữ liệu cũ
+            # -----------------------------
+
+            self._um._users.clear()
+
+            self._um._id_map.clear()
+
+            self._um._graph = SocialGraph()
+
+            self._um._avl_name = AVLTree()
+
+            max_id=0
+
+            # -----------------------------
+            # Load Users
+            # -----------------------------
+
+            for info in data.get("users",[]):
+
+                user=User.from_dict(info)
+
+                self._um._users.append(user)
+
+                self._um._id_map[user.user_id]=user
+
+                self._um._avl_name.insert(user)
+
+                self._um._graph.add_node(user.user_id)
+
+                users_loaded+=1
+
+                try:
+
+                    number=int(user.user_id[1:])
+
+                    if number>max_id:
+
+                        max_id=number
+
+                except ValueError:
+
+                    pass
+
+            # -----------------------------
+            # Update next id
+            # -----------------------------
+
+            self._um._next_id=max_id+1
+
+            # -----------------------------
+            # Load Friendships
+            # -----------------------------
+
+            for edge in data.get("friendships",[]):
+
+                if len(edge)!=2:
+
+                    continue
+
+                id1,id2=edge
+
+                if id1 in self._um._id_map and id2 in self._um._id_map:
+
+                    if not self._um._graph.are_friends(id1,id2):
+
+                        self._um._graph.add_edge(id1,id2)
+
+                        friendships_loaded+=1
+
+            return {
+
+                "users_loaded":users_loaded,
+
+                "friendships_loaded":friendships_loaded
+
+            }
+
+        except Exception as e:
+
+            print("Import JSON Error:",e)
+
+            return {
+
+                "users_loaded":0,
+
+                "friendships_loaded":0
+
+            }
+    # ==========================================================
+    # EXPORT CSV
+    # ==========================================================
+
+    def export_csv(self,
+                   users_filepath: str,
+                   edges_filepath: str) -> bool:
+
+        try:
+
+            users = self._um.get_all_users()
+
+            with open(users_filepath,
+                      "w",
+                      newline="",
+                      encoding="utf-8") as f:
+
+                writer = csv.writer(f)
+
+                writer.writerow([
+                    "user_id",
+                    "name",
+                    "age",
+                    "location",
+                    "interests"
+                ])
+
+                for user in users:
+
+                    writer.writerow([
+
+                        user.user_id,
+
+                        user.name,
+
+                        user.age,
+
+                        user.location,
+
+                        ";".join(user.interests)
+
+                    ])
+
+            graph = self._um.get_graph()
+
+            with open(edges_filepath,
+                      "w",
+                      newline="",
+                      encoding="utf-8") as f:
+
+                writer = csv.writer(f)
+
+                writer.writerow([
+
+                    "user_id1",
+
+                    "user_id2"
+
+                ])
+
+                for id1, id2 in graph.get_all_edges():
+
+                    writer.writerow([id1, id2])
+
+            return True
+
+        except Exception as e:
+
+            print("Export CSV Error:", e)
+
+            return False
+
+    # ==========================================================
+    # IMPORT CSV
+    # ==========================================================
+
+    def import_csv(self,
+                   users_filepath: str,
+                   edges_filepath: str) -> dict:
+
+        try:
+
+            users_loaded = 0
+
+            friendships_loaded = 0
+
+            # ----------------------------------
+            # Reset toàn bộ dữ liệu cũ
+            # ----------------------------------
+
+            self._um._users.clear()
+
+            self._um._id_map.clear()
+
+            self._um._graph = SocialGraph()
+
+            self._um._avl_name = AVLTree()
+
+            max_id = 0
+
+            # ----------------------------------
+            # Load Users
+            # ----------------------------------
+
+            with open(users_filepath,
+                      "r",
+                      encoding="utf-8") as f:
+
+                reader = csv.DictReader(f)
+
+                for row in reader:
+
+                    interests = []
+
+                    if row["interests"] != "":
+
+                        interests = row["interests"].split(";")
+
+                    user = User(
+
+                        row["user_id"],
+
+                        row["name"],
+
+                        int(row["age"]),
+
+                        row["location"],
+
+                        interests
+
+                    )
+
+                    self._um._users.append(user)
+
+                    self._um._id_map[user.user_id] = user
+
+                    self._um._avl_name.insert(user)
+
+                    self._um._graph.add_node(user.user_id)
+
+                    users_loaded += 1
+
+                    try:
+
+                        number = int(user.user_id[1:])
+
+                        if number > max_id:
+
+                            max_id = number
+
+                    except ValueError:
+
+                        pass
+
+            self._um._next_id = max_id + 1
+
+            # ----------------------------------
+            # Load Friendships
+            # ----------------------------------
+
+            with open(edges_filepath,
+                      "r",
+                      encoding="utf-8") as f:
+
+                reader = csv.DictReader(f)
+
+                for row in reader:
+
+                    id1 = row["user_id1"]
+
+                    id2 = row["user_id2"]
+
+                    if id1 not in self._um._id_map:
+
+                        continue
+
+                    if id2 not in self._um._id_map:
+
+                        continue
+
+                    if not self._um._graph.are_friends(id1, id2):
+
+                        self._um._graph.add_edge(id1, id2)
+
+                        friendships_loaded += 1
+
+            return {
+
+                "users_loaded": users_loaded,
+
+                "friendships_loaded": friendships_loaded
+
+            }
+
+        except Exception as e:
+
+            print("Import CSV Error:", e)
+
+            return {
+
+                "users_loaded": 0,
+
+                "friendships_loaded": 0
+
+            }
+    # ==========================================================
+    # GENERATE SAMPLE DATA
+    # ==========================================================
+
+    def generate_sample_data(self,
+                             num_users: int = 50,
+                             avg_friends: int = 5,
+                             seed: int = 42) -> dict:
+
         """
-        Nạp dữ liệu từ file JSON, rebuild toàn bộ cấu trúc dữ liệu.
+        Sinh dữ liệu mẫu.
 
         Args:
-            filepath (str): đường dẫn file input
+            num_users (int): số lượng user
+            avg_friends (int): số bạn trung bình
+            seed (int): random seed
 
         Returns:
-            dict: {"users_loaded": int, "friendships_loaded": int}
+            dict
         """
-        pass
 
-    def export_csv(self, users_filepath: str, edges_filepath: str) -> bool:
+        random.seed(seed)
+
+        start_time = time.time()
+
+        users_created = 0
+
+        friendships_created = 0
+
+        users = []
+
+        last_names = [
+
+            "Nguyễn",
+
+            "Trần",
+
+            "Lê",
+
+            "Phạm",
+
+            "Huỳnh",
+
+            "Phan",
+
+            "Hoàng",
+
+            "Võ"
+
+        ]
+
+        middle_names = [
+
+            "Văn",
+
+            "Thị",
+
+            "Minh",
+
+            "Ngọc",
+
+            "Đăng",
+
+            "Anh",
+
+            "Gia"
+
+        ]
+
+        # ------------------------------------------
+        # Generate Users
+        # ------------------------------------------
+
+        for _ in range(num_users):
+
+            fullname = "{} {} {}".format(
+
+                random.choice(last_names),
+
+                random.choice(middle_names),
+
+                random.choice(self.SAMPLE_NAMES)
+
+            )
+
+            age = random.randint(18, 60)
+
+            location = random.choice(self.SAMPLE_LOCATIONS)
+
+            interests = random.sample(
+
+                self.SAMPLE_INTERESTS,
+
+                random.randint(2, 5)
+
+            )
+
+            user = self._um.add_user(
+
+                name=fullname,
+
+                age=age,
+
+                location=location,
+
+                interests=interests
+
+            )
+
+            if user is not None:
+
+                users.append(user)
+
+                users_created += 1
+
+        # ------------------------------------------
+        # Generate Friendships
+        # ------------------------------------------
+
+        graph = self._um.get_graph()
+
+        total_edges = int(num_users * avg_friends / 2)
+
+        max_edges = num_users * (num_users - 1) // 2
+
+        total_edges = min(total_edges, max_edges)
+
+        attempts = 0
+
+        max_attempts = total_edges * 10
+
+        while friendships_created < total_edges and attempts < max_attempts:
+
+            attempts += 1
+
+            user1, user2 = random.sample(users, 2)
+
+            if user1.user_id == user2.user_id:
+
+                continue
+
+            if graph.are_friends(user1.user_id, user2.user_id):
+
+                continue
+
+            graph.add_edge(
+
+                user1.user_id,
+
+                user2.user_id
+
+            )
+
+            friendships_created += 1
+
+        end_time = time.time()
+
+        return {
+
+            "users_created": users_created,
+
+            "friendships_created": friendships_created,
+
+            "execution_time_ms":
+
+                round(
+
+                    (end_time - start_time) * 1000,
+
+                    2
+
+                )
+
+        }
+
+    # ==========================================================
+    # RESET DATA
+    # ==========================================================
+
+    def clear_data(self):
+
         """
-        Xuất ra 2 file CSV riêng: một cho users, một cho edges.
-
-        Args:
-            users_filepath (str): VD "data/users.csv"
-            edges_filepath (str): VD "data/edges.csv"
-
-        Returns:
-            bool: True nếu xuất thành công
+        Xóa toàn bộ dữ liệu hệ thống.
         """
-        pass
 
-    def import_csv(self, users_filepath: str, edges_filepath: str) -> dict:
+        self._um._users.clear()
+
+        self._um._id_map.clear()
+
+        self._um._graph = SocialGraph()
+
+        self._um._avl_name = AVLTree()
+
+        self._um._next_id = 1
+
+    # ==========================================================
+    # DATA STATISTICS
+    # ==========================================================
+
+    def statistics(self):
+
         """
-        Nạp dữ liệu từ 2 file CSV (users + edges).
-
-        Args:
-            users_filepath (str)
-            edges_filepath (str)
-
-        Returns:
-            dict: {"users_loaded": int, "friendships_loaded": int}
+        Trả về thống kê dữ liệu.
         """
-        pass
 
-    def generate_sample_data(self, num_users: int = 50,
-                              avg_friends: int = 5,
-                              seed: int = 42) -> dict:
-        """
-        Sinh ngẫu nhiên num_users người dùng và kết bạn để demo.
-        Dùng seed để tái tạo cùng dữ liệu khi cần.
+        graph = self._um.get_graph()
 
-        Args:
-            num_users   (int): số người dùng cần sinh (default 50, demo 10000)
-            avg_friends (int): số bạn bè trung bình mỗi người
-            seed        (int): random seed
-
-        Returns:
-            dict: {"users_created": int, "friendships_created": int, "time_ms": float}
-        """
-        pass
-
-
+        return {
+            "total_users": len(self._um.get_all_users()),
+            "total_friendships": len(graph.get_all_edges())
+        }
