@@ -1,6 +1,3 @@
-Đây là phiên bản đã bỏ hết docstring và comment (`#`), chỉ giữ code:
-
-```python
 import heapq
 from models       import SuggestionResult, FilterCriteria
 from models       import User
