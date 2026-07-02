@@ -1,3 +1,45 @@
+"""
+=============================================================================
+  SOCIAL NETWORK FRIEND SUGGESTION SYSTEM
+  Skeleton / Blueprint — chỉ gồm class, method signatures, docstrings
+=============================================================================
+
+CẤU TRÚC DỮ LIỆU SỬ DỤNG:
+  - List/Array      : lưu danh sách users tổng (UserManager._users)
+  - AVL Tree        : tìm kiếm user theo name O(log n) (AVLTree)
+  - Hash Map (dict) : tra cứu O(1) theo user_id (UserManager._id_map)
+  - Graph (Adj List): mô hình mạng xã hội (SocialGraph)
+  - Max-Heap        : xếp hạng gợi ý theo mutual count (heapq)
+  - Queue (deque)   : BFS cho shortest path, community detection
+
+MODULES:
+  1. models.py          → User, FriendRequest
+  2. avl_tree.py        → AVLTree (tự cân bằng, thay BST thuần)
+  3. social_graph.py    → SocialGraph (adjacency list, tất cả thuật toán đồ thị)
+  4. user_manager.py    → UserManager (CRUD, block, search, pending requests)
+  5. suggestion_engine.py → SuggestionEngine (gợi ý, filter, scoring)
+  6. network_analytics.py → NetworkAnalytics (BFS path, influencer, community)
+  7. data_manager.py    → DataManager (import/export JSON/CSV, generate fake data)
+  8. visualizer.py      → Visualizer (PyVis render — chỉ gọi sau khi tính xong)
+  9. cli_shell.py       → CLIShell (interactive command shell)
+  10. main.py           → Entry point
+
+=============================================================================
+"""
+
+# ─────────────────────────────────────────────
+#  FILE: models.py
+# ─────────────────────────────────────────────
+
+from typing import Optional
+from enum import Enum
+
+
+class RequestStatus(Enum):
+    PENDING  = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+
 
 class User:
     """
@@ -33,6 +75,80 @@ class User:
         # Tạo User từ dict (dùng khi import file).
         return User(data["user_id"],data["name"],data["age"],data["location"],data["interests"])
         pass
+
+
+class FriendRequest:
+    """
+    Đại diện một lời mời kết bạn.
+
+    Attributes:
+        from_id   (str)          : ID người gửi
+        to_id     (str)          : ID người nhận
+        status    (RequestStatus): PENDING / ACCEPTED / DECLINED
+        timestamp (float)        : Unix timestamp lúc gửi
+    """
+
+    def __init__(self, from_id: str, to_id: str,
+                 status: RequestStatus = RequestStatus.PENDING,
+                 timestamp: float = 0.0):
+        self.from_id   = from_id
+        self.to_id     = to_id
+        self.status    = status
+        self.timestamp = timestamp
+
+    def __repr__(self):
+        return f"FriendRequest({self.from_id} → {self.to_id}, {self.status.value})"
+
+
+class SuggestionResult:
+    """
+    Kết quả một gợi ý kết bạn (dùng để hiển thị cho người dùng).
+
+    Attributes:
+        user          (User)      : Người được gợi ý
+        mutual_count  (int)       : Số bạn chung
+        mutual_names  (list[str]) : Tên các bạn chung (để hiển thị lý do)
+        common_interests (list[str]): Sở thích chung
+        score         (float)     : Điểm tổng hợp (mutual + interest bonus)
+    """
+
+    def __init__(self, user: User, mutual_count: int,
+                 mutual_names: list = None,
+                 common_interests: list = None,
+                 score: float = 0.0):
+        self.user             = user
+        self.mutual_count     = mutual_count
+        self.mutual_names     = mutual_names     if mutual_names     is not None else []
+        self.common_interests = common_interests if common_interests is not None else []
+        self.score            = score
+
+    def __repr__(self):
+        return f"SuggestionResult({self.user.name}, mutual={self.mutual_count}, score={self.score})"
+
+
+class FilterCriteria:
+    """
+    Bộ lọc cho danh sách gợi ý. None = bỏ qua tiêu chí đó.
+
+    Attributes:
+        age_range      (tuple|None) : (min_age, max_age), VD (18, 25)
+        location       (str|None)   : Lọc theo khu vực chính xác
+        interests      (list|None)  : Lọc user có ÍT NHẤT 1 sở thích chung
+        min_mutual     (int)        : Số bạn chung tối thiểu (mặc định 0)
+    """
+
+    def __init__(self, age_range: Optional[tuple] = None,
+                 location: Optional[str] = None,
+                 interests: Optional[list] = None,
+                 min_mutual: int = 0):
+        self.age_range  = age_range
+        self.location   = location
+        self.interests  = interests
+        self.min_mutual = min_mutual
+
+    def __repr__(self):
+        return (f"FilterCriteria(age={self.age_range}, location={self.location}, "
+                f"interests={self.interests}, min_mutual={self.min_mutual})")
 
 
 # ─────────────────────────────────────────────
@@ -191,10 +307,10 @@ class AVLTree:
 # ─────────────────────────────────────────────
 #  FILE: social_graph.py
 # ─────────────────────────────────────────────
- 
+
 from collections import deque
- 
- 
+
+
 class SocialGraph:
     """
     Đồ thị vô hướng biểu diễn mạng xã hội.
@@ -514,6 +630,8 @@ class SocialGraph:
             "density": density,
             "components": components,
         }
+
+
 # ─────────────────────────────────────────────
 #  FILE: user_manager.py
 # ─────────────────────────────────────────────
@@ -789,6 +907,198 @@ class UserManager:
 
 
 # ─────────────────────────────────────────────
+#  FILE: suggestion_engine.py
+# ─────────────────────────────────────────────
+
+import heapq
+
+
+class SuggestionEngine:
+    """
+    Lõi thuật toán gợi ý kết bạn.
+
+    Chiến lược scoring (weighted):
+        score = mutual_count * W_MUTUAL + common_interests * W_INTEREST
+        W_MUTUAL   = 1.0  (trọng số bạn chung)
+        W_INTEREST = 0.5  (trọng số sở thích chung)
+    """
+
+    W_MUTUAL   = 1.0
+    W_INTEREST = 0.5
+
+    def __init__(self, user_manager: UserManager):
+        self._um = user_manager
+
+    def _compute_score(self, user: User, candidate: User,
+                       mutual_count: int) -> float:
+        """
+        Tính điểm tổng hợp cho một gợi ý.
+
+        Args:
+            user         (User): người đang được gợi ý cho
+            candidate    (User): người được gợi ý
+            mutual_count (int) : số bạn chung đã tính
+
+        Returns:
+            float: điểm tổng hợp
+        """
+        pass
+
+    def _apply_filters(self, user: User, candidates: list,
+                       filters: FilterCriteria) -> list:
+        """
+        Áp dụng FilterCriteria lên danh sách SuggestionResult.
+        Lọc theo: age_range, location, interests, min_mutual.
+
+        Args:
+            user       (User)            : người dùng hiện tại
+            candidates (list[SuggestionResult]): danh sách thô
+            filters    (FilterCriteria)  : tiêu chí lọc
+
+        Returns:
+            list[SuggestionResult]: danh sách đã lọc
+        """
+        pass
+
+    def suggest(self, user_id: str, top_k: int = 10,
+                filters: FilterCriteria = None) -> list:
+        """
+        Gợi ý bạn bè cho user_id.
+
+        Thuật toán:
+            1. Dùng SocialGraph.get_candidates_at_depth2() → dict{id: mutual_count}
+            2. Loại bỏ user bị block (từ cả 2 chiều)
+            3. Tính score tổng hợp cho mỗi candidate
+            4. Dùng Max-Heap (heapq) lấy top_k — O(n log k)
+            5. Áp dụng filters nếu có
+            6. Đính kèm mutual_names và common_interests vào kết quả
+
+        Args:
+            user_id  (str)                  : ID người cần gợi ý
+            top_k    (int)                  : số gợi ý tối đa trả về
+            filters  (FilterCriteria | None): bộ lọc tùy chọn
+
+        Returns:
+            list[SuggestionResult]: sắp xếp giảm dần theo score
+        """
+        pass
+
+    def suggest_by_interest_only(self, user_id: str, top_k: int = 10) -> list:
+        """
+        Gợi ý dựa thuần túy trên sở thích chung (không cần bạn chung).
+        Dùng khi user mới, chưa có bạn bè nào.
+
+        Args:
+            user_id (str)
+            top_k   (int)
+
+        Returns:
+            list[SuggestionResult]: sắp xếp theo số sở thích chung giảm dần
+        """
+        pass
+
+
+# ─────────────────────────────────────────────
+#  FILE: network_analytics.py
+# ─────────────────────────────────────────────
+
+class NetworkAnalytics:
+    """
+    Phân tích mạng lưới nâng cao.
+    Mọi thuật toán đều tự implement, gọi vào SocialGraph.
+    """
+
+    def __init__(self, user_manager: UserManager):
+        self._um    = user_manager
+        self._graph = user_manager.get_graph()
+
+    def shortest_path(self, from_id: str, to_id: str) -> dict:
+        """
+        Tìm đường kết nối ngắn nhất giữa 2 người (dùng BFS trong SocialGraph).
+
+        Args:
+            from_id (str)
+            to_id   (str)
+
+        Returns:
+            dict: {
+                "path"      : list[str],  # danh sách user_id
+                "path_names": list[str],  # danh sách tên tương ứng
+                "degree"    : int         # số bậc ngăn cách
+            }
+            Trả về {"path": [], "degree": -1} nếu không kết nối.
+        """
+        pass
+
+    def top_influencers(self, top_n: int = 5) -> list:
+        """
+        Tìm top N người có nhiều bạn bè nhất (node degree cao nhất).
+        Dùng partial sort / Max-Heap — O(V log top_n).
+
+        Args:
+            top_n (int): số người muốn lấy
+
+        Returns:
+            list[dict]: [{"user": User, "friend_count": int}, ...]
+                        sắp xếp giảm dần theo friend_count
+        """
+        pass
+
+    def detect_communities(self) -> list:
+        """
+        Phát hiện cộng đồng (Connected Components) bằng BFS/DFS.
+        Mỗi component là một "nhóm bạn" tách biệt.
+
+        Returns:
+            list[dict]: [
+                {
+                    "community_id": int,
+                    "size"        : int,
+                    "members"     : list[User]
+                },
+                ...
+            ]
+            Sắp xếp giảm dần theo size.
+        """
+        pass
+
+    def network_stats(self) -> dict:
+        """
+        Thống kê tổng quan toàn mạng lưới.
+
+        Returns:
+            dict: {
+                "total_users"      : int,
+                "total_friendships": int,
+                "avg_friends"      : float,
+                "density"          : float,  # tỉ lệ cạnh thực / cạnh tối đa
+                "num_communities"  : int,
+                "largest_community": int,    # size of largest component
+                "isolated_users"   : int     # số user không có bạn nào
+            }
+        """
+        pass
+
+    def common_interest_score(self, user_id1: str, user_id2: str) -> dict:
+        """
+        Tính độ tương đồng sở thích giữa 2 người dùng.
+
+        Args:
+            user_id1 (str)
+            user_id2 (str)
+
+        Returns:
+            dict: {
+                "common"  : list[str],  # sở thích chung
+                "score"   : float,      # Jaccard similarity = |A∩B| / |A∪B|
+                "user1_only": list[str],
+                "user2_only": list[str]
+            }
+        """
+        pass
+
+
+# ─────────────────────────────────────────────
 #  FILE: data_manager.py
 # ─────────────────────────────────────────────
 
@@ -796,8 +1106,8 @@ import json
 import csv
 import random
 import time
-from datetime import datetime
-from user_manager import UserManager, User
+import datetime
+
 
 class DataManager:
     """
@@ -1394,3 +1704,282 @@ class DataManager:
             "total_users": len(self._um.get_all_users()),
             "total_friendships": len(graph.get_all_edges())
         }
+
+
+# ─────────────────────────────────────────────
+#  FILE: visualizer.py
+# ─────────────────────────────────────────────
+
+class Visualizer:
+    """
+    Render mạng lưới quan hệ bằng PyVis (interactive HTML).
+    Chỉ đảm nhiệm phần HIỂN THỊ — mọi dữ liệu đã được tính bởi SocialGraph.
+
+    PyVis tạo file HTML có thể mở trên browser, hỗ trợ zoom/drag node.
+    """
+
+    def __init__(self, user_manager: UserManager):
+        self._um = user_manager
+
+    def render_full_network(self, output_path: str = "network.html",
+                            highlight_ids: list = None) -> str:
+        """
+        Vẽ toàn bộ mạng lưới quan hệ.
+        Node = user (màu theo location), Edge = friendship.
+        Node được highlight nếu có trong highlight_ids.
+
+        Args:
+            output_path   (str)       : đường dẫn file HTML output
+            highlight_ids (list[str]) : danh sách user_id cần tô màu đặc biệt
+
+        Returns:
+            str: đường dẫn file HTML đã tạo
+        """
+        pass
+
+    def render_ego_network(self, user_id: str,
+                           output_path: str = "ego_network.html") -> str:
+        """
+        Vẽ mạng lưới cá nhân (ego network): user + toàn bộ bạn bè
+        + bạn của bạn (depth 2).
+
+        Args:
+            user_id     (str): trung tâm của ego network
+            output_path (str)
+
+        Returns:
+            str: đường dẫn file HTML
+        """
+        pass
+
+    def render_path(self, path_ids: list,
+                    output_path: str = "path.html") -> str:
+        """
+        Highlight đường đi ngắn nhất giữa 2 người trên đồ thị.
+
+        Args:
+            path_ids    (list[str]): danh sách user_id trên đường đi
+            output_path (str)
+
+        Returns:
+            str: đường dẫn file HTML
+        """
+        pass
+
+    def render_communities(self, communities: list,
+                           output_path: str = "communities.html") -> str:
+        """
+        Mỗi community được tô một màu khác nhau.
+
+        Args:
+            communities (list[dict]): output của NetworkAnalytics.detect_communities()
+            output_path (str)
+
+        Returns:
+            str: đường dẫn file HTML
+        """
+        pass
+
+
+# ─────────────────────────────────────────────
+#  FILE: cli_shell.py
+# ─────────────────────────────────────────────
+
+class CLIShell:
+    """
+    Interactive Command-Line Shell.
+    Thay vì menu số, dùng lệnh text giống terminal thực:
+
+    COMMANDS (nhóm theo chức năng):
+    ─── USER MANAGEMENT ───────────────────────────────
+      user add <name> <age> <location> <interest1,interest2,...>
+      user remove <id>
+      user update <id> <field> <value>
+      user get <id>
+      user list
+      user search <query>          ← fuzzy search theo tên
+      user search-age <min> <max>  ← tìm theo khoảng tuổi
+
+    ─── FRIEND MANAGEMENT ─────────────────────────────
+      friend request <from_id> <to_id>
+      friend cancel  <from_id> <to_id>
+      friend accept  <user_id> <from_id>
+      friend decline <user_id> <from_id>
+      friend remove  <id1> <id2>
+      friend list    <user_id>
+      friend pending <user_id>
+      friend mutual  <id1> <id2>
+
+    ─── BLOCK ─────────────────────────────────────────
+      block   <user_id> <target_id>
+      unblock <user_id> <target_id>
+
+    ─── SUGGESTIONS ───────────────────────────────────
+      suggest <user_id> [top_k]
+      suggest <user_id> --filter age=<min>-<max>
+      suggest <user_id> --filter location=<loc>
+      suggest <user_id> --filter interests=<i1,i2>
+      suggest <user_id> --filter mutual=<min>
+      (các filter có thể kết hợp: --filter age=18-25 location=HCM)
+
+    ─── ANALYTICS ─────────────────────────────────────
+      analytics path     <id1> <id2>    ← shortest path
+      analytics influencer [top_n]
+      analytics community
+      analytics stats
+      analytics similarity <id1> <id2>  ← interest score
+
+    ─── DATA ──────────────────────────────────────────
+      data export json <filepath>
+      data export csv  <users_path> <edges_path>
+      data import json <filepath>
+      data import csv  <users_path> <edges_path>
+      data generate    [num_users]
+
+    ─── VISUALIZE ─────────────────────────────────────
+      viz network  [output_path]
+      viz ego      <user_id> [output_path]
+      viz path     <id1> <id2>
+      viz community
+
+    ─── MISC ──────────────────────────────────────────
+      help [command]
+      clear
+      exit
+    """
+
+    def __init__(self, user_manager: UserManager,
+                 suggestion_engine: SuggestionEngine,
+                 analytics: NetworkAnalytics,
+                 data_manager: DataManager,
+                 visualizer: Visualizer):
+        self._um  = user_manager
+        self._se  = suggestion_engine
+        self._ana = analytics
+        self._dm  = data_manager
+        self._viz = visualizer
+        self._running = False
+
+    def run(self) -> None:
+        """
+        Khởi động shell, chạy vòng lặp đọc lệnh cho đến khi gõ 'exit'.
+        In banner chào mừng khi bắt đầu.
+        """
+        pass
+
+    def _parse_command(self, raw: str) -> tuple:
+        """
+        Parse chuỗi lệnh thành (command_group, subcommand, args, kwargs).
+        VD: "suggest U001 --filter age=18-25 location=HCM"
+            → ("suggest", None, ["U001"], {"age": (18,25), "location": "HCM"})
+
+        Args:
+            raw (str): chuỗi lệnh thô người dùng nhập
+
+        Returns:
+            tuple: (group, sub, args, kwargs)
+        """
+        pass
+
+    def _parse_filter_args(self, kwargs: dict) -> FilterCriteria:
+        """
+        Chuyển kwargs từ --filter thành FilterCriteria object.
+
+        Args:
+            kwargs (dict): VD {"age": "18-25", "location": "HCM"}
+
+        Returns:
+            FilterCriteria
+        """
+        pass
+
+    def _dispatch(self, group: str, sub: str, args: list, kwargs: dict) -> None:
+        """
+        Điều hướng lệnh đến handler tương ứng.
+
+        Args:
+            group  (str) : nhóm lệnh ("user", "friend", "suggest", ...)
+            sub    (str) : sub-command ("add", "remove", ...)
+            args   (list): positional arguments
+            kwargs (dict): keyword arguments (từ --filter, --output, ...)
+        """
+        pass
+
+    # ── HANDLER METHODS (mỗi nhóm lệnh) ──────────────────────────────
+
+    def _handle_user(self, sub: str, args: list, kwargs: dict) -> None:
+        """Xử lý nhóm lệnh 'user ...'"""
+        pass
+
+    def _handle_friend(self, sub: str, args: list, kwargs: dict) -> None:
+        """Xử lý nhóm lệnh 'friend ...'"""
+        pass
+
+    def _handle_suggest(self, args: list, kwargs: dict) -> None:
+        """Xử lý lệnh 'suggest ...' kèm filter tùy chọn"""
+        pass
+
+    def _handle_analytics(self, sub: str, args: list, kwargs: dict) -> None:
+        """Xử lý nhóm lệnh 'analytics ...'"""
+        pass
+
+    def _handle_data(self, sub: str, args: list, kwargs: dict) -> None:
+        """Xử lý nhóm lệnh 'data ...'"""
+        pass
+
+    def _handle_viz(self, sub: str, args: list, kwargs: dict) -> None:
+        """Xử lý nhóm lệnh 'viz ...'"""
+        pass
+
+    def _print_table(self, headers: list, rows: list) -> None:
+        """
+        In dữ liệu dạng bảng đẹp ra terminal (không dùng thư viện ngoài).
+
+        Args:
+            headers (list[str]): tiêu đề cột
+            rows    (list[list]): dữ liệu từng hàng
+        """
+        pass
+
+    def _print_suggestion(self, result: SuggestionResult) -> None:
+        """
+        In một gợi ý kèm lý do: "3 bạn chung: An, Bình, Chi | Sở thích: music, travel"
+        """
+        pass
+
+
+# ─────────────────────────────────────────────
+#  FILE: main.py
+# ─────────────────────────────────────────────
+
+def main():
+    """
+    Entry point: khởi tạo tất cả components và chạy CLI Shell.
+
+    Thứ tự khởi tạo:
+        1. UserManager (chứa AVLTree + SocialGraph)
+        2. SuggestionEngine(user_manager)
+        3. NetworkAnalytics(user_manager)
+        4. DataManager(user_manager)
+        5. Visualizer(user_manager)
+        6. CLIShell(tất cả components trên)
+        7. shell.run()
+    """
+    user_manager      = UserManager()
+    suggestion_engine = SuggestionEngine(user_manager)
+    analytics         = NetworkAnalytics(user_manager)
+    data_manager      = DataManager(user_manager)
+    visualizer        = Visualizer(user_manager)
+
+    shell = CLIShell(
+        user_manager      = user_manager,
+        suggestion_engine = suggestion_engine,
+        analytics         = analytics,
+        data_manager      = data_manager,
+        visualizer        = visualizer,
+    )
+    shell.run()
+
+
+if __name__ == "__main__":
+    main()
