@@ -89,15 +89,15 @@ class CLIShell:
         print("Chào mừng đến với hệ thống Quản lí người dùng")
         print('Nhập "help" để xem lệnh')
         print("============================")
-        while True:
+        self._running=True
+        while self._running:
             command=input("InputCommand> ").lower()
-            if command == "exit" : break
             try:
                 command_parsed=self._parse_command(command)
                 self._dispatch(command_parsed)
             except Exception as e:
                 print("Đã xảy ra lỗi:", e)
-                print('Cú pháp không hợp lệ, nhập "help" để xem lệnh\n\n')
+                print('Nhập "help" để xem lệnh\n\n')
         pass
 
     def _parse_command(self, raw: str) -> tuple:
@@ -137,26 +137,75 @@ class CLIShell:
             self._handle_block(command_parsed)
         elif handler_method in ["help","clear","exit"]:
             self._handle_misc(command_parsed)
+        else:
+            raise Exception(f'Không có nhóm lệnh {handler_method}')
 
 
     # ── HANDLER METHODS (mỗi nhóm lệnh) ──────────────────────────────
 
     def _handle_user(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'user ...'"""
-        sub_command = command_parsed[1]
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu subcommand")
+        else:
+            sub_command = command_parsed[1]
         if sub_command == "add":
-            name=command_parsed[1]
-            age=int(command_parsed[2])
-            location=command_parsed[3]
-            interest=command_parsed[4].split(",")
+            if len(command_parsed) != 6:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user add <name> <age> <location> <interest1,interest2,...>" ')
+            name=command_parsed[2]
+            age=int(command_parsed[3])
+            location=command_parsed[4]
+            interest=command_parsed[5].split(",")
             self._um.add_user(name,age,location,interest)
         elif sub_command == "graph_list" :
             print(self._um.get_graph().find_connected_components())
-        pass
+        elif sub_command == "remove" :
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user remove <id>" ')
+            id=command_parsed[2]
+            self._um.remove_user(id)
+        elif sub_command == "update" :
+            pass
+        elif sub_command == "get" :
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user get <id>" ')
+            id=command_parsed[2]
+            print(self._um.get_user(id))
+        elif sub_command == "list" :
+            if len(command_parsed) != 2:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user list" ')
+            print(self._um.list_users_sorted())
+        elif sub_command == "search" :
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user search <nguyen_van_a>  ← fuzzy search theo tên" ')
+            print(self._um.search_by_name_fuzzy(command_parsed[2].replace("_", " ")))
+        elif sub_command == "search-age" :
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user search-age <min> <max>  ← tìm theo khoảng tuổi" ')
+            min_age=command_parsed[3]
+            max_age=command_parsed[4]
+            print(self._um.search_by_age_range(min_age,max_age))
+        else:
+            raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
+
 
     def _handle_friend(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'friend ...'"""
-        pass
+        sub_command = command_parsed[1]
+        if sub_command == "request":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend request <from_id> <to_id>" ')
+            from_id=command_parsed[2]
+            to_id=command_parsed[3]
+            self._um.send_friend_request(from_id,to_id)
+        elif sub_command == "remove" :
+            if len(command_parsed) != 6:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user remove <id>" ')
+            id=command_parsed[2]
+            self._um.remove_user(id)
+        else:
+            raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
+
 
     def _handle_suggest(self, command_parsed: list) -> None:
         """Xử lý lệnh 'suggest ...' kèm filter tùy chọn"""
@@ -183,151 +232,148 @@ class CLIShell:
         sub_command = command_parsed[0]
         
         if sub_command == "help":
-            if len(command_parsed)>1:
+            if len(command_parsed)>2:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "help [command]" ')
+            if len(command_parsed)==2:
                 help_category=command_parsed[1]
             else:
                 help_category=input("Vui lòng chọn loại chức năng(user/friend/block/suggestion/analytics/data/visualize/misc/all): ")
             if help_category == "user":
                 print("""
-    ─── USER MANAGEMENT ───────────────────────────────
-      user add <name> <age> <location> <interest1,interest2,...>
-      user remove <id>
-      user update <id> <field> <value>
-      user get <id>
-      user list
-      user search <query>          ← fuzzy search theo tên
-      user search-age <min> <max>  ← tìm theo khoảng tuổi
-
+─── USER MANAGEMENT ───────────────────────────────
+    user add <name> <age> <location> <interest1,interest2,...>
+    user remove <id>
+    user update <id> <field> <value>
+    user get <id>
+    user list
+    user search <query>          ← fuzzy search theo tên
+    user search-age <min> <max>  ← tìm theo khoảng tuổi
 """)
             elif help_category == "friend":
                 print("""
-    ─── FRIEND MANAGEMENT ─────────────────────────────
-      friend request <from_id> <to_id>
-      friend cancel  <from_id> <to_id>
-      friend accept  <user_id> <from_id>
-      friend decline <user_id> <from_id>
-      friend remove  <id1> <id2>
-      friend list    <user_id>
-      friend pending <user_id>
-      friend mutual  <id1> <id2>
-
+─── FRIEND MANAGEMENT ─────────────────────────────
+    friend request <from_id> <to_id>
+    friend cancel  <from_id> <to_id>
+    friend accept  <user_id> <from_id>
+    friend decline <user_id> <from_id>
+    friend remove  <id1> <id2>
+    friend list    <user_id>
+    friend pending <user_id>
+    friend mutual  <id1> <id2>
 """)
             elif help_category == "block":
                 print("""
-    ─── BLOCK ─────────────────────────────────────────
-      block   <user_id> <target_id>
-      unblock <user_id> <target_id>
+─── BLOCK ─────────────────────────────────────────
+    block   <user_id> <target_id>
+    unblock <user_id> <target_id>
 
 """)
             elif help_category == "suggestion":
                 print("""
-    ─── SUGGESTIONS ───────────────────────────────────
-      suggest <user_id> [top_k]
-      suggest <user_id> --filter age=<min>-<max>
-      suggest <user_id> --filter location=<loc>
-      suggest <user_id> --filter interests=<i1,i2>
-      suggest <user_id> --filter mutual=<min>
-      (các filter có thể kết hợp: --filter age=18-25 location=HCM)
-
+─── SUGGESTIONS ───────────────────────────────────
+    suggest <user_id> [top_k]
+    suggest <user_id> --filter age=<min>-<max>
+    suggest <user_id> --filter location=<loc>
+    suggest <user_id> --filter interests=<i1,i2>
+    suggest <user_id> --filter mutual=<min>
+    (các filter có thể kết hợp: --filter age=18-25 location=HCM)
 """)
             elif help_category == "analytics":
                 print("""
-    ─── ANALYTICS ─────────────────────────────────────
-      analytics path     <id1> <id2>    ← shortest path
-      analytics influencer [top_n]
-      analytics community
-      analytics stats
-      analytics similarity <id1> <id2>  ← interest score
-
+─── ANALYTICS ─────────────────────────────────────
+    analytics path     <id1> <id2>    ← shortest path
+    analytics influencer [top_n]
+    analytics community
+    analytics stats
+    analytics similarity <id1> <id2>  ← interest score
 """)
             elif help_category == "data":
                 print("""
-    ─── DATA ──────────────────────────────────────────
-      data export json <filepath>
-      data export csv  <users_path> <edges_path>
-      data import json <filepath>
-      data import csv  <users_path> <edges_path>
-      data generate    [num_users]
-                      
+─── DATA ──────────────────────────────────────────
+    data export json <filepath>
+    data export csv  <users_path> <edges_path>
+    data import json <filepath>
+    data import csv  <users_path> <edges_path>
+    data generate    [num_users]                    
 """)
             elif help_category == "visualize":
                 print("""
-    ─── VISUALIZE ─────────────────────────────────────
-      viz network  [output_path]
-      viz ego      <user_id> [output_path]
-      viz path     <id1> <id2>
-      viz community
-
+─── VISUALIZE ─────────────────────────────────────
+    viz network  [output_path]
+    viz ego      <user_id> [output_path]
+    viz path     <id1> <id2>
+    viz community
 """)
             elif help_category == "misc":
-                print("""
-    ─── MISC ──────────────────────────────────────────
-      help [command]
-      clear
-      exit
-                      
+                print("""─── MISC ──────────────────────────────────────────
+    help [command]
+    clear
+    exit           
 """)
             elif help_category == "all":
                 print("""
-     COMMANDS (nhóm theo chức năng):
-    ─── USER MANAGEMENT ───────────────────────────────
-      user add <name> <age> <location> <interest1,interest2,...>
-      user remove <id>
-      user update <id> <field> <value>
-      user get <id>
-      user list
-      user search <query>          ← fuzzy search theo tên
-      user search-age <min> <max>  ← tìm theo khoảng tuổi
+    COMMANDS (nhóm theo chức năng):
+─── USER MANAGEMENT ───────────────────────────────
+    user add <name> <age> <location> <interest1,interest2,...>
+    user remove <id>
+    user update <id> <field> <value>
+    user get <id>
+    user list
+    user search <nguyen_van_a>          ← fuzzy search theo tên
+    user search-age <min> <max>  ← tìm theo khoảng tuổi
 
-    ─── FRIEND MANAGEMENT ─────────────────────────────
-      friend request <from_id> <to_id>
-      friend cancel  <from_id> <to_id>
-      friend accept  <user_id> <from_id>
-      friend decline <user_id> <from_id>
-      friend remove  <id1> <id2>
-      friend list    <user_id>
-      friend pending <user_id>
-      friend mutual  <id1> <id2>
+─── FRIEND MANAGEMENT ─────────────────────────────
+    friend request <from_id> <to_id>
+    friend cancel  <from_id> <to_id>
+    friend accept  <user_id> <from_id>
+    friend decline <user_id> <from_id>
+    friend remove  <id1> <id2>
+    friend list    <user_id>
+    friend pending <user_id>
+    friend mutual  <id1> <id2>
 
-    ─── BLOCK ─────────────────────────────────────────
-      block   <user_id> <target_id>
-      unblock <user_id> <target_id>
+─── BLOCK ─────────────────────────────────────────
+    block   <user_id> <target_id>
+    unblock <user_id> <target_id>
 
-    ─── SUGGESTIONS ───────────────────────────────────
-      suggest <user_id> [top_k]
-      suggest <user_id> --filter age=<min>-<max>
-      suggest <user_id> --filter location=<loc>
-      suggest <user_id> --filter interests=<i1,i2>
-      suggest <user_id> --filter mutual=<min>
-      (các filter có thể kết hợp: --filter age=18-25 location=HCM)
+─── SUGGESTIONS ───────────────────────────────────
+    suggest <user_id> [top_k]
+    suggest <user_id> --filter age=<min>-<max>
+    suggest <user_id> --filter location=<loc>
+    suggest <user_id> --filter interests=<i1,i2>
+    suggest <user_id> --filter mutual=<min>
+    (các filter có thể kết hợp: --filter age=18-25 location=HCM)
 
-    ─── ANALYTICS ─────────────────────────────────────
-      analytics path     <id1> <id2>    ← shortest path
-      analytics influencer [top_n]
-      analytics community
-      analytics stats
-      analytics similarity <id1> <id2>  ← interest score
+─── ANALYTICS ─────────────────────────────────────
+    analytics path     <id1> <id2>    ← shortest path
+    analytics influencer [top_n]
+    analytics community
+    analytics stats
+    analytics similarity <id1> <id2>  ← interest score
 
-    ─── DATA ──────────────────────────────────────────
-      data export json <filepath>
-      data export csv  <users_path> <edges_path>
-      data import json <filepath>
-      data import csv  <users_path> <edges_path>
-      data generate    [num_users]
+─── DATA ──────────────────────────────────────────
+    data export json <filepath>
+    data export csv  <users_path> <edges_path>
+    data import json <filepath>
+    data import csv  <users_path> <edges_path>
+    data generate    [num_users]
 
-    ─── VISUALIZE ─────────────────────────────────────
-      viz network  [output_path]
-      viz ego      <user_id> [output_path]
-      viz path     <id1> <id2>
-      viz community
+─── VISUALIZE ─────────────────────────────────────
+    viz network  [output_path]
+    viz ego      <user_id> [output_path]
+    viz path     <id1> <id2>
+    viz community
 
-    ─── MISC ──────────────────────────────────────────
-      help [command]
-      clear
-      exit
+─── MISC ──────────────────────────────────────────
+    help [command]
+    clear
+    exit
 """)
-                    
-        pass
+        elif sub_command == "clear":
+            pass
+        elif sub_command == "exit":
+            self._running=False
+        
 
 
     def _print_table(self, headers: list, rows: list) -> None:
