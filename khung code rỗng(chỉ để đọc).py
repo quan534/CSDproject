@@ -65,15 +65,25 @@ class User:
         return f"User({self.user_id}, {self.name}, {self.age}, {self.location})"
 
     def to_dict(self) -> dict:
-        # return một dict với keys, values tương ứng là tên các attributes và giá trị của nó của của đối tượng user
-        return {"user_id": self.user_id, "name": self.name, "age": self.age, "location": self.location, "interests": self.interests}
+        """
+        Chuyển User thành dict để xuất JSON/CSV.
 
+        Returns:
+            dict: {"user_id": ..., "name": ..., "age": ..., ...}
+        """
         pass
 
     @staticmethod
     def from_dict(data: dict) -> "User":
-        # Tạo User từ dict (dùng khi import file).
-        return User(data["user_id"],data["name"],data["age"],data["location"],data["interests"])
+        """
+        Tạo User từ dict (dùng khi import file).
+
+        Args:
+            data (dict): dict chứa các field của User
+
+        Returns:
+            User: object User mới
+        """
         pass
 
 
@@ -315,293 +325,187 @@ class SocialGraph:
     """
     Đồ thị vô hướng biểu diễn mạng xã hội.
     Dùng Adjacency List (dict of sets) — tối ưu cho sparse graph.
- 
+
     _adj: dict[str, set[str]]
         key   = user_id
         value = set các user_id đã kết bạn
- 
+
     Tất cả thuật toán (BFS, DFS, mutual friends) tự implement.
     """
- 
+
     def __init__(self):
         self._adj: dict[str, set] = {}   # adjacency list chính
- 
+
     # ── NODE (USER) MANAGEMENT ────────────────────────────────────────
- 
+
     def add_node(self, user_id: str) -> None:
         """
         Thêm node (user) vào đồ thị khi tạo tài khoản mới.
- 
+
         Args:
             user_id (str): ID người dùng mới
- 
+
         Returns:
             None
         """
-        if user_id not in self._adj:
-            self._adj[user_id] = set()
- 
+        pass
+
     def remove_node(self, user_id: str) -> None:
         """
         Xóa node và tất cả cạnh liên quan khi xóa tài khoản.
- 
+
         Args:
             user_id (str): ID người dùng cần xóa
- 
+
         Returns:
             None. Cập nhật adjacency list của tất cả bạn bè cũ.
         """
-        if user_id not in self._adj:
-            return
-        # Gỡ user_id khỏi danh sách bạn bè của tất cả người từng kết bạn
-        for friend_id in self._adj[user_id]:
-            self._adj[friend_id].discard(user_id)
-        # Xóa hẳn node
-        del self._adj[user_id]
- 
+        pass
+
     # ── EDGE (FRIENDSHIP) MANAGEMENT ─────────────────────────────────
- 
+
     def add_edge(self, user_id1: str, user_id2: str) -> None:
         """
         Tạo kết bạn (cạnh 2 chiều) giữa 2 người dùng.
- 
+
         Args:
             user_id1 (str): ID người dùng 1
             user_id2 (str): ID người dùng 2
- 
+
         Returns:
             None
         """
-        if user_id1 == user_id2:
-            return  # không tự kết bạn với chính mình
-        # Đảm bảo cả 2 node tồn tại
-        self.add_node(user_id1)
-        self.add_node(user_id2)
-        self._adj[user_id1].add(user_id2)
-        self._adj[user_id2].add(user_id1)
- 
+        pass
+
     def remove_edge(self, user_id1: str, user_id2: str) -> None:
         """
         Hủy kết bạn (xóa cạnh 2 chiều).
- 
+
         Args:
             user_id1 (str): ID người dùng 1
             user_id2 (str): ID người dùng 2
- 
+
         Returns:
             None
         """
-        if user_id1 in self._adj:
-            self._adj[user_id1].discard(user_id2)
-        if user_id2 in self._adj:
-            self._adj[user_id2].discard(user_id1)
- 
+        pass
+
     def are_friends(self, user_id1: str, user_id2: str) -> bool:
         """
         Kiểm tra 2 người có phải bạn bè không — O(1) nhờ set.
- 
+
         Args:
             user_id1, user_id2 (str)
- 
+
         Returns:
             bool
         """
-        return user_id2 in self._adj.get(user_id1, set())
- 
+        pass
+
     def get_friends(self, user_id: str) -> set:
         """
         Lấy tập hợp ID bạn bè của một user — O(1).
- 
+
         Args:
             user_id (str)
- 
+
         Returns:
             set[str]: tập ID bạn bè
         """
-        # Trả về bản copy để tránh bên ngoài chỉnh sửa trực tiếp _adj
-        return set(self._adj.get(user_id, set()))
- 
+        pass
+
     def degree(self, user_id: str) -> int:
         """
         Số bạn bè (bậc của node) — O(1).
- 
+
         Args:
             user_id (str)
- 
+
         Returns:
             int: số bạn bè
         """
-        return len(self._adj.get(user_id, set()))
- 
+        pass
+
     # ── CORE ALGORITHMS (tự implement, không dùng thư viện) ──────────
- 
+
     def get_mutual_friends(self, user_id1: str, user_id2: str) -> set:
         """
         Tìm bạn chung giữa 2 người dùng — intersection của 2 set — O(min(d1,d2)).
- 
+
         Args:
             user_id1 (str)
             user_id2 (str)
- 
+
         Returns:
             set[str]: tập ID bạn chung
         """
-        friends1 = self._adj.get(user_id1, set())
-        friends2 = self._adj.get(user_id2, set())
-        return friends1 & friends2
- 
+        pass
+
     def get_candidates_at_depth2(self, user_id: str) -> dict:
         """
         BFS độ sâu 2: tìm tất cả "bạn của bạn" chưa kết bạn với user.
         Đây là nguồn dữ liệu thô cho SuggestionEngine.
- 
+
         Args:
             user_id (str): ID người cần gợi ý
- 
+
         Returns:
             dict[str, int]: {candidate_id: số_bạn_chung}
             VD: {"U005": 3, "U012": 1}
         """
-        if user_id not in self._adj:
-            return {}
- 
-        direct_friends = self._adj[user_id]
-        candidates: dict = {}
- 
-        # Với mỗi bạn trực tiếp (depth 1), xét bạn của bạn đó (depth 2)
-        for friend_id in direct_friends:
-            for fof_id in self._adj.get(friend_id, set()):
-                # Loại: chính user_id, và những người đã là bạn trực tiếp
-                if fof_id == user_id or fof_id in direct_friends:
-                    continue
-                candidates[fof_id] = candidates.get(fof_id, 0) + 1
- 
-        return candidates
- 
+        pass
+
     def shortest_path(self, from_id: str, to_id: str) -> list:
         """
         BFS tìm đường đi ngắn nhất (chuỗi kết nối) giữa 2 người.
- 
+
         Args:
             from_id (str): ID người xuất phát
             to_id   (str): ID người đích
- 
+
         Returns:
             list[str]: danh sách ID theo đường đi, VD ["U001","U003","U007"]
                        Trả về [] nếu không có đường đi.
         """
-        if from_id not in self._adj or to_id not in self._adj:
-            return []
- 
-        if from_id == to_id:
-            return [from_id]
- 
-        visited = {from_id}
-        parent = {from_id: None}
-        queue = deque([from_id])
- 
-        found = False
-        while queue:
-            current = queue.popleft()
-            if current == to_id:
-                found = True
-                break
-            for neighbor in self._adj[current]:
-                if neighbor not in visited:
-                    visited.add(neighbor)
-                    parent[neighbor] = current
-                    queue.append(neighbor)
- 
-        if not found and to_id not in visited:
-            return []
- 
-        # Truy ngược từ to_id về from_id qua parent map
-        path = []
-        node = to_id
-        while node is not None:
-            path.append(node)
-            node = parent.get(node)
-        path.reverse()
- 
-        # Nếu node đầu của path không phải from_id thì coi như không tìm được
-        if not path or path[0] != from_id:
-            return []
- 
-        return path
- 
+        pass
+
     def degree_of_separation(self, from_id: str, to_id: str) -> int:
         """
         Tính số bậc ngăn cách dựa trên shortest_path.
- 
+
         Args:
             from_id (str)
             to_id   (str)
- 
+
         Returns:
             int: số bậc (= len(path) - 1), hoặc -1 nếu không kết nối
         """
-        path = self.shortest_path(from_id, to_id)
-        if not path:
-            return -1
-        return len(path) - 1
- 
+        pass
+
     def find_connected_components(self) -> list:
         """
         DFS/BFS quét toàn đồ thị, phân nhóm thành các connected component
         (các "cộng đồng" tách biệt nhau).
- 
+
         Returns:
             list[set[str]]: danh sách các nhóm, mỗi nhóm là set user_id
             VD: [{"U001","U002","U003"}, {"U007","U008"}]
         """
-        visited = set()
-        components = []
- 
-        for start_node in self._adj:
-            if start_node in visited:
-                continue
- 
-            # BFS từ start_node để lấy toàn bộ component chứa nó
-            component = set()
-            queue = deque([start_node])
-            visited.add(start_node)
- 
-            while queue:
-                current = queue.popleft()
-                component.add(current)
-                for neighbor in self._adj[current]:
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        queue.append(neighbor)
- 
-            components.append(component)
- 
-        return components
- 
+        pass
+
     def get_all_edges(self) -> list:
         """
         Lấy tất cả cạnh (friendship) trong đồ thị (dùng để export / visualize).
- 
+
         Returns:
             list[tuple[str,str]]: danh sách cặp (id1, id2), mỗi cạnh xuất hiện 1 lần
         """
-        edges = []
-        seen = set()
- 
-        for node, neighbors in self._adj.items():
-            for neighbor in neighbors:
-                # Dùng frozenset để tránh đếm cạnh 2 lần (A-B và B-A)
-                edge_key = frozenset((node, neighbor))
-                if edge_key not in seen:
-                    seen.add(edge_key)
-                    edges.append((node, neighbor))
- 
-        return edges
- 
+        pass
+
     def stats(self) -> dict:
         """
         Thống kê cơ bản của đồ thị.
- 
+
         Returns:
             dict: {
                 "total_nodes": int,
@@ -611,25 +515,7 @@ class SocialGraph:
                 "components" : int      # số connected components
             }
         """
-        total_nodes = len(self._adj)
-        total_edges = len(self.get_all_edges())
- 
-        avg_degree = (2 * total_edges / total_nodes) if total_nodes > 0 else 0.0
- 
-        if total_nodes > 1:
-            density = (2 * total_edges) / (total_nodes * (total_nodes - 1))
-        else:
-            density = 0.0
- 
-        components = len(self.find_connected_components())
- 
-        return {
-            "total_nodes": total_nodes,
-            "total_edges": total_edges,
-            "avg_degree": avg_degree,
-            "density": density,
-            "components": components,
-        }
+        pass
 
 
 # ─────────────────────────────────────────────
@@ -1106,604 +992,95 @@ import json
 import csv
 import random
 import time
-import datetime
 
 
 class DataManager:
     """
-    Quản lý Import / Export dữ liệu và sinh dữ liệu mẫu.
-
-    Chức năng:
-    - Export JSON
-    - Import JSON
-    - Export CSV
-    - Import CSV
-    - Generate Sample Data
+    Import/Export dữ liệu và sinh dữ liệu mẫu để demo.
     """
 
-    SAMPLE_NAMES = [
-        "An","Bình","Chi","Duy","Em","Phong","Giang","Hà","Ivy","Khánh",
-        "Lan","Minh","Nam","Oanh","Quang","Sơn","Trang","Tuấn","Vy","Yến"
-    ]
-
-    SAMPLE_LOCATIONS = [
-        "HCM",
-        "HN",
-        "Đà Nẵng",
-        "Huế",
-        "Cần Thơ",
-        "Hải Phòng",
-        "Bình Dương"
-    ]
-
-    SAMPLE_INTERESTS = [
-        "music",
-        "travel",
-        "gaming",
-        "coding",
-        "movies",
-        "sports",
-        "reading",
-        "photography",
-        "cooking",
-        "art"
-    ]
+    SAMPLE_NAMES     = ["An", "Bình", "Chi", "Duy", "Em", "Phong", "Giang",
+                        "Hà", "Ivy", "Khánh", "Lan", "Minh", "Nam", "Oanh"]
+    SAMPLE_LOCATIONS = ["HCM", "HN", "ĐN", "Cần Thơ", "Huế"]
+    SAMPLE_INTERESTS = ["music", "travel", "gaming", "cooking", "sports",
+                        "reading", "photography", "coding", "movies", "art"]
 
     def __init__(self, user_manager: UserManager):
         self._um = user_manager
 
-    # ==========================================================
-    # EXPORT JSON
-    # ==========================================================
-
     def export_json(self, filepath: str) -> bool:
-
-        try:
-
-            users = self._um.get_all_users()
-            users_data = [u.to_dict() for u in users]
-            graph = self._um.get_graph()
-
-            data = {
-                "users": users_data,
-                "friendships": graph.get_all_edges(),
-                "exported_at": datetime.now().isoformat()
-            }
-
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(
-                    data,
-                    f,
-                    ensure_ascii=False,
-                    indent=4
-                )
-
-            return True
-
-        except Exception as e:
-            print("Export JSON Error:", e)
-            return False
-
-    # ==========================================================
-    # IMPORT JSON
-    # ==========================================================
-    def import_json(self, filepath: str) ->dict:
-
-        try:
-
-            with open(filepath,"r",encoding="utf-8") as f:
-
-                data=json.load(f)
-
-            users_loaded=0
-
-            friendships_loaded=0
-
-            # -----------------------------
-            # Xóa dữ liệu cũ
-            # -----------------------------
-
-            self._um._users.clear()
-
-            self._um._id_map.clear()
-
-            self._um._graph = SocialGraph()
-
-            self._um._avl_name = AVLTree()
-
-            max_id=0
-
-            # -----------------------------
-            # Load Users
-            # -----------------------------
-
-            for info in data.get("users",[]):
-
-                user=User.from_dict(info)
-
-                self._um._users.append(user)
-
-                self._um._id_map[user.user_id]=user
-
-                self._um._avl_name.insert(user)
-
-                self._um._graph.add_node(user.user_id)
-
-                users_loaded+=1
-
-                try:
-
-                    number=int(user.user_id[1:])
-
-                    if number>max_id:
-
-                        max_id=number
-
-                except ValueError:
-
-                    pass
-
-            # -----------------------------
-            # Update next id
-            # -----------------------------
-
-            self._um._next_id=max_id+1
-
-            # -----------------------------
-            # Load Friendships
-            # -----------------------------
-
-            for edge in data.get("friendships",[]):
-
-                if len(edge)!=2:
-
-                    continue
-
-                id1,id2=edge
-
-                if id1 in self._um._id_map and id2 in self._um._id_map:
-
-                    if not self._um._graph.are_friends(id1,id2):
-
-                        self._um._graph.add_edge(id1,id2)
-
-                        friendships_loaded+=1
-
-            return {
-
-                "users_loaded":users_loaded,
-
-                "friendships_loaded":friendships_loaded
-
-            }
-
-        except Exception as e:
-
-            print("Import JSON Error:",e)
-
-            return {
-
-                "users_loaded":0,
-
-                "friendships_loaded":0
-
-            }
-    # ==========================================================
-    # EXPORT CSV
-    # ==========================================================
-
-    def export_csv(self,
-                   users_filepath: str,
-                   edges_filepath: str) -> bool:
-
-        try:
-
-            users = self._um.get_all_users()
-
-            with open(users_filepath,
-                      "w",
-                      newline="",
-                      encoding="utf-8") as f:
-
-                writer = csv.writer(f)
-
-                writer.writerow([
-                    "user_id",
-                    "name",
-                    "age",
-                    "location",
-                    "interests"
-                ])
-
-                for user in users:
-
-                    writer.writerow([
-
-                        user.user_id,
-
-                        user.name,
-
-                        user.age,
-
-                        user.location,
-
-                        ";".join(user.interests)
-
-                    ])
-
-            graph = self._um.get_graph()
-
-            with open(edges_filepath,
-                      "w",
-                      newline="",
-                      encoding="utf-8") as f:
-
-                writer = csv.writer(f)
-
-                writer.writerow([
-
-                    "user_id1",
-
-                    "user_id2"
-
-                ])
-
-                for id1, id2 in graph.get_all_edges():
-
-                    writer.writerow([id1, id2])
-
-            return True
-
-        except Exception as e:
-
-            print("Export CSV Error:", e)
-
-            return False
-
-    # ==========================================================
-    # IMPORT CSV
-    # ==========================================================
-
-    def import_csv(self,
-                   users_filepath: str,
-                   edges_filepath: str) -> dict:
-
-        try:
-
-            users_loaded = 0
-
-            friendships_loaded = 0
-
-            # ----------------------------------
-            # Reset toàn bộ dữ liệu cũ
-            # ----------------------------------
-
-            self._um._users.clear()
-
-            self._um._id_map.clear()
-
-            self._um._graph = SocialGraph()
-
-            self._um._avl_name = AVLTree()
-
-            max_id = 0
-
-            # ----------------------------------
-            # Load Users
-            # ----------------------------------
-
-            with open(users_filepath,
-                      "r",
-                      encoding="utf-8") as f:
-
-                reader = csv.DictReader(f)
-
-                for row in reader:
-
-                    interests = []
-
-                    if row["interests"] != "":
-
-                        interests = row["interests"].split(";")
-
-                    user = User(
-
-                        row["user_id"],
-
-                        row["name"],
-
-                        int(row["age"]),
-
-                        row["location"],
-
-                        interests
-
-                    )
-
-                    self._um._users.append(user)
-
-                    self._um._id_map[user.user_id] = user
-
-                    self._um._avl_name.insert(user)
-
-                    self._um._graph.add_node(user.user_id)
-
-                    users_loaded += 1
-
-                    try:
-
-                        number = int(user.user_id[1:])
-
-                        if number > max_id:
-
-                            max_id = number
-
-                    except ValueError:
-
-                        pass
-
-            self._um._next_id = max_id + 1
-
-            # ----------------------------------
-            # Load Friendships
-            # ----------------------------------
-
-            with open(edges_filepath,
-                      "r",
-                      encoding="utf-8") as f:
-
-                reader = csv.DictReader(f)
-
-                for row in reader:
-
-                    id1 = row["user_id1"]
-
-                    id2 = row["user_id2"]
-
-                    if id1 not in self._um._id_map:
-
-                        continue
-
-                    if id2 not in self._um._id_map:
-
-                        continue
-
-                    if not self._um._graph.are_friends(id1, id2):
-
-                        self._um._graph.add_edge(id1, id2)
-
-                        friendships_loaded += 1
-
-            return {
-
-                "users_loaded": users_loaded,
-
-                "friendships_loaded": friendships_loaded
-
-            }
-
-        except Exception as e:
-
-            print("Import CSV Error:", e)
-
-            return {
-
-                "users_loaded": 0,
-
-                "friendships_loaded": 0
-
-            }
-    # ==========================================================
-    # GENERATE SAMPLE DATA
-    # ==========================================================
-
-    def generate_sample_data(self,
-                             num_users: int = 50,
-                             avg_friends: int = 5,
-                             seed: int = 42) -> dict:
-
         """
-        Sinh dữ liệu mẫu.
+        Xuất toàn bộ dữ liệu (users + friendships) ra file JSON.
 
         Args:
-            num_users (int): số lượng user
-            avg_friends (int): số bạn trung bình
-            seed (int): random seed
+            filepath (str): đường dẫn file output, VD "data/network.json"
 
         Returns:
-            dict
+            bool: True nếu xuất thành công
+
+        Output format:
+            {
+                "users": [ {user fields...}, ... ],
+                "friendships": [ [id1, id2], ... ],
+                "exported_at": "ISO timestamp"
+            }
         """
+        pass
 
-        random.seed(seed)
-
-        start_time = time.time()
-
-        users_created = 0
-
-        friendships_created = 0
-
-        users = []
-
-        last_names = [
-
-            "Nguyễn",
-
-            "Trần",
-
-            "Lê",
-
-            "Phạm",
-
-            "Huỳnh",
-
-            "Phan",
-
-            "Hoàng",
-
-            "Võ"
-
-        ]
-
-        middle_names = [
-
-            "Văn",
-
-            "Thị",
-
-            "Minh",
-
-            "Ngọc",
-
-            "Đăng",
-
-            "Anh",
-
-            "Gia"
-
-        ]
-
-        # ------------------------------------------
-        # Generate Users
-        # ------------------------------------------
-
-        for _ in range(num_users):
-
-            fullname = "{} {} {}".format(
-
-                random.choice(last_names),
-
-                random.choice(middle_names),
-
-                random.choice(self.SAMPLE_NAMES)
-
-            )
-
-            age = random.randint(18, 60)
-
-            location = random.choice(self.SAMPLE_LOCATIONS)
-
-            interests = random.sample(
-
-                self.SAMPLE_INTERESTS,
-
-                random.randint(2, 5)
-
-            )
-
-            user = self._um.add_user(
-
-                name=fullname,
-
-                age=age,
-
-                location=location,
-
-                interests=interests
-
-            )
-
-            if user is not None:
-
-                users.append(user)
-
-                users_created += 1
-
-        # ------------------------------------------
-        # Generate Friendships
-        # ------------------------------------------
-
-        graph = self._um.get_graph()
-
-        total_edges = int(num_users * avg_friends / 2)
-
-        max_edges = num_users * (num_users - 1) // 2
-
-        total_edges = min(total_edges, max_edges)
-
-        attempts = 0
-
-        max_attempts = total_edges * 10
-
-        while friendships_created < total_edges and attempts < max_attempts:
-
-            attempts += 1
-
-            user1, user2 = random.sample(users, 2)
-
-            if user1.user_id == user2.user_id:
-
-                continue
-
-            if graph.are_friends(user1.user_id, user2.user_id):
-
-                continue
-
-            graph.add_edge(
-
-                user1.user_id,
-
-                user2.user_id
-
-            )
-
-            friendships_created += 1
-
-        end_time = time.time()
-
-        return {
-
-            "users_created": users_created,
-
-            "friendships_created": friendships_created,
-
-            "execution_time_ms":
-
-                round(
-
-                    (end_time - start_time) * 1000,
-
-                    2
-
-                )
-
-        }
-
-    # ==========================================================
-    # RESET DATA
-    # ==========================================================
-
-    def clear_data(self):
-
+    def import_json(self, filepath: str) -> dict:
         """
-        Xóa toàn bộ dữ liệu hệ thống.
+        Nạp dữ liệu từ file JSON, rebuild toàn bộ cấu trúc dữ liệu.
+
+        Args:
+            filepath (str): đường dẫn file input
+
+        Returns:
+            dict: {"users_loaded": int, "friendships_loaded": int}
         """
+        pass
 
-        self._um._users.clear()
-
-        self._um._id_map.clear()
-
-        self._um._graph = SocialGraph()
-
-        self._um._avl_name = AVLTree()
-
-        self._um._next_id = 1
-
-    # ==========================================================
-    # DATA STATISTICS
-    # ==========================================================
-
-    def statistics(self):
-
+    def export_csv(self, users_filepath: str, edges_filepath: str) -> bool:
         """
-        Trả về thống kê dữ liệu.
+        Xuất ra 2 file CSV riêng: một cho users, một cho edges.
+
+        Args:
+            users_filepath (str): VD "data/users.csv"
+            edges_filepath (str): VD "data/edges.csv"
+
+        Returns:
+            bool: True nếu xuất thành công
         """
+        pass
 
-        graph = self._um.get_graph()
+    def import_csv(self, users_filepath: str, edges_filepath: str) -> dict:
+        """
+        Nạp dữ liệu từ 2 file CSV (users + edges).
 
-        return {
-            "total_users": len(self._um.get_all_users()),
-            "total_friendships": len(graph.get_all_edges())
-        }
+        Args:
+            users_filepath (str)
+            edges_filepath (str)
+
+        Returns:
+            dict: {"users_loaded": int, "friendships_loaded": int}
+        """
+        pass
+
+    def generate_sample_data(self, num_users: int = 50,
+                              avg_friends: int = 5,
+                              seed: int = 42) -> dict:
+        """
+        Sinh ngẫu nhiên num_users người dùng và kết bạn để demo.
+        Dùng seed để tái tạo cùng dữ liệu khi cần.
+
+        Args:
+            num_users   (int): số người dùng cần sinh (default 50, demo 10000)
+            avg_friends (int): số bạn bè trung bình mỗi người
+            seed        (int): random seed
+
+        Returns:
+            dict: {"users_created": int, "friendships_created": int, "time_ms": float}
+        """
+        pass
 
 
 # ─────────────────────────────────────────────
