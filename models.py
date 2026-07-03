@@ -43,6 +43,9 @@ class User:
         return User(data["user_id"],data["name"],data["age"],data["location"],data["interests"])
         pass
 
+    def __str__(self):
+        return f"User({self.user_id}, {self.name}, {self.age}, {self.location})"
+
 
 class FriendRequest:
     """
