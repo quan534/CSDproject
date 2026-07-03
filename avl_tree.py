@@ -25,19 +25,32 @@ class AVLTree:
         self._root = None
 
     # ── INTERNAL HELPERS ──────────────────────────────────────────────
-
     def _height(self, node: _AVLNode) -> int:
+        if node is None:
+            return 0
+        left = self._height(node.left)
+        right = self._height(node.right)
+        return 1 + max(left,right)
         """Trả về height của node (0 nếu None)."""
         pass
 
     def _balance_factor(self, node: _AVLNode) -> int:
+        blf = self._height(node.left) - self.height(node.right)
+        return blf
         """
         Tính balance factor = height(left) - height(right).
         AVL yêu cầu giá trị này luôn trong [-1, 0, 1].
         """
         pass
+    
 
     def _update_height(self, node: _AVLNode) -> None:
+        if node is None:
+            return
+        left = node.left.height if node.left is not None else -1
+        right = node.left.height if node.right is not None else -1
+        node.height =1 + max(left,right)
+        return
         """Cập nhật lại height sau khi rotate."""
         pass
 
