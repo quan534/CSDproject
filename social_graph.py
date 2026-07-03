@@ -250,7 +250,6 @@ class SocialGraph:
         for start_node in self._adj:
             if start_node in visited:
                 continue
- 
             # BFS từ start_node để lấy toàn bộ component chứa nó
             component = set()
             queue = deque([start_node])

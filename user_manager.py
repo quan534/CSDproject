@@ -48,8 +48,10 @@ class UserManager:
         Returns:
             User: object User vừa tạo (kèm user_id được gán)
         """
-        self._graph.add_node(self._generate_id())
-        pass
+        user=User(self._generate_id(),name,age,location,interests)
+        self._graph.add_node(user.user_id)
+        self._avl_name.insert(user)
+        return user
 
     def remove_user(self, user_id: str) -> bool:
         """
@@ -62,7 +64,13 @@ class UserManager:
         Returns:
             bool: True nếu xóa thành công, False nếu không tồn tại
         """
-        pass
+        try:
+            self._graph.remove_node(user_id)
+            self._avl_name.delete(self.get_user(user_id))
+            return True
+        except Exception as e:
+            return False
+
 
     def update_user(self, user_id: str, **kwargs) -> bool:
         """
@@ -88,7 +96,7 @@ class UserManager:
         Returns:
             User | None
         """
-        pass
+        return self._id_map[user_id]
 
     def get_all_users(self) -> list:
         """
@@ -97,7 +105,7 @@ class UserManager:
         Returns:
             list[User]
         """
-        pass
+        return self._users
 
     # ── SEARCH ────────────────────────────────────────────────────────
 
@@ -111,7 +119,8 @@ class UserManager:
         Returns:
             User | None
         """
-        pass
+        return self._avl_name.search_exact(name)
+        
 
     def search_by_name_fuzzy(self, query: str) -> list:
         """
@@ -124,7 +133,8 @@ class UserManager:
         Returns:
             list[User]: danh sách user khớp
         """
-        pass
+        return [user for user in self._users if query in user.name]
+        
 
     def search_by_age_range(self, min_age: int, max_age: int) -> list:
         """
@@ -147,7 +157,7 @@ class UserManager:
         Returns:
             list[User]
         """
-        pass
+        return self._avl_name.inorder()
 
     # ── FRIEND REQUEST FLOW ───────────────────────────────────────────
 
