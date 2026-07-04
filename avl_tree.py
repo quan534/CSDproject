@@ -1,10 +1,9 @@
 from models import User
 from typing import Optional
 
-class _AVLNode:
-    """Node nội bộ của AVL Tree. Key = name (str), value = User object."""
-    def __init__(self, user: User):
-        self.key    = key          # tên dùng để so sánh
+class AVLNode:
+    """Node nội bộ của AVL Tree.  value = User object."""
+    def __init__(self, user: User):       #
         self.user   = user
         self.left   = None
         self.right  = None
@@ -22,10 +21,10 @@ class AVLTree:
     """
 
     def __init__(self):
-        self._root = None
+        self.root = None
 
     # ── INTERNAL HELPERS ──────────────────────────────────────────────
-    def _height(self, node: _AVLNode) -> int:
+    def height(self, node: AVLNode) -> int:
         if node is None:
             return 0
         left = self._height(node.left)
@@ -34,7 +33,7 @@ class AVLTree:
         """Trả về height của node (0 nếu None)."""
         pass
 
-    def _balance_factor(self, node: _AVLNode) -> int:
+    def balance_factor(self, node: AVLNode) -> int:
         blf = self._height(node.left) - self.height(node.right)
         return blf
         """
@@ -43,60 +42,106 @@ class AVLTree:
         """
         pass
     
-    def _update_height(self, node: _AVLNode) -> None:
+    def update_height(self, node: AVLNode) -> None:
         if node is None:
             return
         left = node.left.height if node.left is not None else -1
-        right = node.left.height if node.right is not None else -1
+        right = node.right.height if node.right is not None else -1
         node.height =1 + max(left,right)
         return
         """Cập nhật lại height sau khi rotate."""
         pass
 
-    def _rotate_right(self, y: _AVLNode) -> _AVLNode:
+    def rotate_right(self, y: AVLNode) -> AVLNode:
         x = y.left
         T2 = x.right
         x.right = y
         y.left = T2
-        self._update_height(y)
-        self._update_height(x)
+        self.update_height(y)
+        self.update_height(x)
         return x
     
-    def _rotate_left(self, x: _AVLNode) -> _AVLNode:
+    def rotate_left(self, x: AVLNode) -> AVLNode:
         y = x.right
         T2 = y.left
         y.left = x
         x.right = T2
-        self._update_height(x)
-        self._update_height(y)
+        self.update_height(x)
+        self.update_height(y)
         return y
 
-    def _rebalance(self, node: _AVLNode) -> _AVLNode:
-        """
-        Kiểm tra balance factor và gọi rotate phù hợp (LL, RR, LR, RL).
-
-        Args:
-            node (_AVLNode): node cần kiểm tra
-
-        Returns:
-            _AVLNode: node sau khi đã cân bằng
-        """
-        pass
-
-    def _insert_recursive(self, node, user) -> _AVLNode:
-        """Đệ quy insert + rebalance trên đường về."""
-        pass
-        new_node = user
+    def rebalance(self, node: AVLNode) -> AVLNode:
+        """Kiểm tra balance factor và gọi rotate phù hợp (LL, RR, LR, RL)."""
         if node is None:
-            return new_node
-        if user.id > node.id:
-            node.right = self._insert_recursive
+            return node
 
-    def _delete_recursive(self, node: _AVLNode, key: str) -> _AVLNode:
-        """Đệ quy delete + rebalance. Dùng in-order successor khi có 2 con."""
-        pass
+        # 1. Cập nhật lại chiều cao của nút hiện tại
+        self.update_height(node)
 
-    def _min_node(self, node: _AVLNode) -> _AVLNode:
+        # 2. Lấy chỉ số cân bằng
+        balance = self._balance_factor(node)
+
+        # Trường hợp Trái Trái (LL)
+        if balance > 1 and self.balance_factor(node.left) >= 0:
+            return self.rotate_right(node)
+
+        # Trường hợp Trái Phải (LR)
+        if balance > 1 and self.balance_factor(node.left) < 0:
+            node.left = self.rotate_left(node.left)
+            return self.rotate_right(node)
+
+        # Trường hợp Phải Phải (RR)
+        if balance < -1 and self.balance_factor(node.right) <= 0:
+            return self.rotate_left(node)
+
+        # Trường hợp Phải Trái (RL)
+        if balance < -1 and self.balance_factor(node.right) > 0:
+            node.right = self.rotate_right(node.right)
+            return self.rotate_left(node)
+
+        return node  # Không mất cân bằng, trả về nút cũ
+
+    def insert_recursive(self, node,user) -> AVLNode:
+        """Đệ quy insert + rebalance trên đường về."""
+        
+        if node is None:
+            return AVLNode(user)
+        if user.id > node,user.id:
+            node.right = self.insert_recursive(node.right,user)
+        elif user.id < node.user.id:
+            node.left = self.insert_recursive(node.left,user)
+        else:
+            return node
+        return self.rebalance(node)
+
+    def delete_recursive(self, node: Optional[AVLNode], user_id: int):
+        """Đệ quy xóa nút và tái cân bằng hệ thống."""
+        if node is None:
+            return node
+
+        if user_id < node.user.id:
+            node.left = self.delete_recursive(node.left, user_id)
+        elif user_id > node.user.id:
+            node.right = self.delete_recursive(node.right, user_id)
+        else:
+            # Nút cần xóa nằm ở đây
+            if node.left is None or node.right is None:
+                temp = node.left if node.left else node.right
+                if temp is None:
+                    node = None
+                else:
+                    node = temp  # Sao chép các liên kết con
+            else:
+                # Nút có 2 con: tìm nút thay thế nhỏ nhất bên phải
+                temp = self.min_node(node.right)
+                node.user = temp.user
+                node.right = self.delete_recursive(node.right, temp.user.id)
+
+        if node is None:
+            return node
+        return self.rebalance(node)
+    
+    def min_node(self, node: AVLNode) -> AVLNode:
         if node == None:
             return
         current = node
@@ -118,9 +163,10 @@ class AVLTree:
         Returns:
             None
         """
-        pass
+        self.insert_recursive(self.root,user)
+        return
 
-    def delete(self, name: str) -> None:
+    def delete(self, id: str) -> None:
         """
         Xóa node có key = name khỏi cây.
 
@@ -130,7 +176,7 @@ class AVLTree:
         Returns:
             None
         """
-        pass
+        self.delete_recursive(self.root, id)
 
     def search_exact(self, name: str) -> Optional[User]:
         """
