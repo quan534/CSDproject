@@ -48,9 +48,11 @@ class UserManager:
         Returns:
             User: object User vừa tạo (kèm user_id được gán)
         """
-        user=User(self._generate_id(),name,age,location,interests)
+        user_id=self._generate_id()
+        user=User(user_id,name,age,location,interests)
         self._graph.add_node(user.user_id)
         self._avl_name.insert(user)
+        self._id_map[user_id]=user
         return user
 
     def remove_user(self, user_id: str) -> bool:
@@ -284,4 +286,8 @@ class UserManager:
     def get_graph(self) -> SocialGraph:
         """Trả về SocialGraph để các module khác dùng."""
         return self._graph
+    
+    # khác
+    def get_mutual_friends(self,id1,id2):
+        return self._graph.get_mutual_friends()
 

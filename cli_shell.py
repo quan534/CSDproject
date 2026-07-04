@@ -4,6 +4,7 @@ from suggestion_engine import SuggestionEngine
 from network_analytics import NetworkAnalytics
 from data_manager      import DataManager
 from visualizer        import Visualizer
+import traceback
 
 
 class CLIShell:
@@ -97,6 +98,8 @@ class CLIShell:
                 self._dispatch(command_parsed)
             except Exception as e:
                 print("Đã xảy ra lỗi:", e)
+                traceback.print_exc()
+
                 print('Nhập "help" để xem lệnh\n\n')
         pass
 
@@ -104,17 +107,17 @@ class CLIShell:
         "chia token cho command"
         return raw.strip().split()
 
-    def _parse_filter_args(self, kwargs: dict) -> FilterCriteria:
-        """
-        Chuyển kwargs từ --filter thành FilterCriteria object.
+    # def _parse_filter_args(self, kwargs: dict) -> FilterCriteria:
+    #     """
+    #     Chuyển kwargs từ --filter thành FilterCriteria object.
 
-        Args:
-            kwargs (dict): VD {"age": "18-25", "location": "HCM"}
+    #     Args:
+    #         kwargs (dict): VD {"age": "18-25", "location": "HCM"}
 
-        Returns:
-            FilterCriteria
-        """
-        pass
+    #     Returns:
+    #         FilterCriteria
+    #     """
+    #     pass
 
     def _dispatch(self, command_parsed) -> None:
         """
@@ -191,25 +194,82 @@ class CLIShell:
 
     def _handle_friend(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'friend ...'"""
-        sub_command = command_parsed[1]
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu subcommand")
+        else:
+            sub_command = command_parsed[1]
         if sub_command == "request":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend request <from_id> <to_id>" ')
             from_id=command_parsed[2]
             to_id=command_parsed[3]
             self._um.send_friend_request(from_id,to_id)
+        elif sub_command == "accept":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <from_id> <to_id>" ')
+            user_id=command_parsed[2]
+            from_id=command_parsed[3]
+            self._um.send_friend_request(user_id,from_id)
         elif sub_command == "remove" :
-            if len(command_parsed) != 6:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "user remove <id>" ')
-            id=command_parsed[2]
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend remove <id>" ')
+            id1=command_parsed[2]
+            id2=command_parsed[3]
             self._um.remove_user(id)
+        elif sub_command == "list" :
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend list <user_id>" ')
+            user_id=command_parsed[2]
+            self._um.remove_user(user_id)
+        elif sub_command == "pending" :
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend pending <user_id>" ')
+            user_id=command_parsed[2]
+            print(self._um.get_pending_requests(user_id))
+        elif sub_command == "mutual" :
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend mutual <id1> <id2>" ')
+            id1=command_parsed[2]
+            id2=command_parsed[3]
+            print(self._um.get_mutual_friends(id1,id2))
+
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
 
 
     def _handle_suggest(self, command_parsed: list) -> None:
         """Xử lý lệnh 'suggest ...' kèm filter tùy chọn"""
-        pass
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu user_id")
+        else:
+            user_id = command_parsed[1].upper()
+            sub_command = command_parsed[2:]
+        
+        # defaut
+        top_k=10
+        age_range=None
+        location=None
+        interest=None
+        min_mutual=1
+
+        for e in sub_command:
+            if "top_" in e:
+                top_k = int(e.replace("top_", ""))
+            elif "--filter" in e:
+                pass
+            elif "age" in e:
+                age_range=tuple(e.replace("age=", "").split("-"))
+            elif "location" in e:
+                location=tuple(e.replace("location=", ""))
+            elif "interest" in e:
+                interest=tuple(e.replace("interests=", "").split(","))
+            elif "mutual" in e:
+                min_mutual=tuple(e.replace("mutual=", ""))
+            else:
+                raise Exception(f"Filter {e} không hợp lệ")
+        
+
+        print(self._se.suggest(user_id,top_k,FilterCriteria(age_range,location,interest,min_mutual)))
 
     def _handle_analytics(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'analytics ...'"""
@@ -217,6 +277,20 @@ class CLIShell:
 
     def _handle_data(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'data ...'"""
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu subcommand")
+        else:
+            sub_command = command_parsed[1]
+        if sub_command == "generate":
+            if len(command_parsed) != 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "data generate [num_users]" ')
+            num_users=int(command_parsed[2])
+            self._dm.generate_sample_data(num_users)
+        
+        else:
+            raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
+
+
         pass
 
     def _handle_viz(self, command_parsed: list) -> None:
@@ -276,7 +350,7 @@ class CLIShell:
     suggest <user_id> --filter location=<loc>
     suggest <user_id> --filter interests=<i1,i2>
     suggest <user_id> --filter mutual=<min>
-    (các filter có thể kết hợp: --filter age=18-25 location=HCM)
+    (các filter có thể kết hợp: [top_k] --filter age=18-25 location=HCM)
 """)
             elif help_category == "analytics":
                 print("""
