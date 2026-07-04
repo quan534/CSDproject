@@ -3,7 +3,7 @@ from typing import Optional
 
 class _AVLNode:
     """Node nội bộ của AVL Tree. Key = name (str), value = User object."""
-    def __init__(self, key: str, user: User):
+    def __init__(self, user: User):
         self.key    = key          # tên dùng để so sánh
         self.user   = user
         self.left   = None
@@ -43,7 +43,6 @@ class AVLTree:
         """
         pass
     
-
     def _update_height(self, node: _AVLNode) -> None:
         if node is None:
             return
@@ -55,28 +54,22 @@ class AVLTree:
         pass
 
     def _rotate_right(self, y: _AVLNode) -> _AVLNode:
-        """
-        Xoay phải tại node y (xử lý trường hợp Left-Left).
-
-        Args:
-            y (_AVLNode): node mất cân bằng
-
-        Returns:
-            _AVLNode: node gốc mới sau khi xoay
-        """
-        pass
-
+        x = y.left
+        T2 = x.right
+        x.right = y
+        y.left = T2
+        self._update_height(y)
+        self._update_height(x)
+        return x
+    
     def _rotate_left(self, x: _AVLNode) -> _AVLNode:
-        """
-        Xoay trái tại node x (xử lý trường hợp Right-Right).
-
-        Args:
-            x (_AVLNode): node mất cân bằng
-
-        Returns:
-            _AVLNode: node gốc mới sau khi xoay
-        """
-        pass
+        y = x.right
+        T2 = y.left
+        y.left = x
+        x.right = T2
+        self._update_height(x)
+        self._update_height(y)
+        return y
 
     def _rebalance(self, node: _AVLNode) -> _AVLNode:
         """
@@ -90,15 +83,26 @@ class AVLTree:
         """
         pass
 
-    def _insert_recursive(self, node: _AVLNode, key: str, user: User) -> _AVLNode:
+    def _insert_recursive(self, node, user) -> _AVLNode:
         """Đệ quy insert + rebalance trên đường về."""
         pass
+        new_node = user
+        if node is None:
+            return new_node
+        if user.id > node.id:
+            node.right = self._insert_recursive
 
     def _delete_recursive(self, node: _AVLNode, key: str) -> _AVLNode:
         """Đệ quy delete + rebalance. Dùng in-order successor khi có 2 con."""
         pass
 
     def _min_node(self, node: _AVLNode) -> _AVLNode:
+        if node == None:
+            return
+        current = node
+        while current.left is not None:
+            current = current.left
+        return current
         """Tìm node nhỏ nhất (ngoài cùng bên trái)."""
         pass
 
