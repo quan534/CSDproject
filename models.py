@@ -94,6 +94,9 @@ class SuggestionResult:
 
     def __repr__(self):
         return f"SuggestionResult({self.user.name}, mutual={self.mutual_count}, score={self.score})"
+        
+    def __str__(self):
+        return f"SuggestionResult({self.user.name}, mutual={self.mutual_count}, score={self.score})"
 
 
 class FilterCriteria:
