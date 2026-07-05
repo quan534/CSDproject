@@ -1,258 +1,238 @@
+import unicodedata
 from models import User
-from typing import Optional
+
+
+def extract_last_name(full_name: str) -> str:
+    """ Trích xuất từ cuối cùng của họ tên và chuẩn hóa chữ thường """
+    if not full_name:
+        return ""
+    # Đồng nhất bảng mã dấu tiếng Việt (NFC) và chuyển về chữ thường
+    clean_name = unicodedata.normalize('NFC', full_name).strip().lower()
+    words = clean_name.split()
+    return words[-1] if words else ""
+
+
 
 class AVLNode:
-    """Node nội bộ của AVL Tree.  value = User object."""
-    def __init__(self,user):      #
-        self.key = self._extract_last_name(user.name)
-        self.list   = [user]
-        self.left   = None
-        self.right  = None
-        self.height = 1            # dùng để tính balance factor
-
-    def _extract_last_name(self, name: str) -> str:
-        """Trích xuất từ cuối cùng của họ tên và chuẩn hóa"""
-        if not name:
-            return ""
-        clean_name = name.strip().lower()
-        words = clean_name.split()
-        return words[-1] if words else ""
+    def __init__(self, user: User):
+        self.key_name = extract_last_name(user.name)  # Khóa là Tên chung (ví dụ: "an")
+        self.users = [user]                           # Mảng lưu các đối tượng trùng tên chính
+        self.left = None
+        self.right = None
+        self.height = 1
 
 
-class AVLTree:
-    """
-    Cây AVL tự cân bằng — thay thế BST thuần để đảm bảo O(log n) mọi lúc.
 
-    Hỗ trợ tìm kiếm chính xác theo tên VÀ range-search theo tuổi
-    (nếu build AVL thứ hai theo age làm key).
-
-    Tất cả thuật toán tự implement, không dùng thư viện ngoài.
-    """
-
+class AVLTreeByLastName:
     def __init__(self):
         self.root = None
-    
-    # ── INTERNAL HELPERS ──────────────────────────────────────────────
-    def height(self, node: AVLNode) -> int:
-        if node is None:
-            return 0
-        left = self._height(node.left)
-        right = self._height(node.right)
-        return 1 + max(left,right)
-        """Trả về height của node (0 nếu None)."""
-        pass
 
-    def balance_factor(self, node: AVLNode) -> int:
-        blf = self._height(node.left) - self.height(node.right)
-        return blf
-        """
-        Tính balance factor = height(left) - height(right).
-        AVL yêu cầu giá trị này luôn trong [-1, 0, 1].
-        """
-        pass
-    
-    def update_height(self, node: AVLNode) -> None:
-        if node is None:
-            return
-        left = node.left.height if node.left is not None else -1
-        right = node.right.height if node.right is not None else -1
-        node.height =1 + max(left,right)
-        return
-        """Cập nhật lại height sau khi rotate."""
+    # --- Các hàm bổ trợ quản lý chiều cao và xoay cây ---
+    def _get_height(self, node):
+        return node.height if node else 0
+
+    def _get_balance(self, node):
+        return self._get_height(node.left) - self._get_height(node.right) if node else 0
+
+    def _right_rotate(self, z):
+        y = z.left
+        T3 = y.right
         
-
-    def rotate_right(self, y: AVLNode) -> AVLNode:
-        x = y.left
-        T2 = x.right
-        x.right = y
-        y.left = T2
-        self.update_height(y)
-        self.update_height(x)
-        return x
-    
-    def rotate_left(self, x: AVLNode) -> AVLNode:
-        y = x.right
-        T2 = y.left
-        y.left = x
-        x.right = T2
-        self.update_height(x)
-        self.update_height(y)
+        # Thực hiện xoay
+        y.right = z
+        z.left = T3
+        
+        # Cập nhật chiều cao
+        z.height = 1 + max(self._get_height(z.left), self._get_height(z.right))
+        y.height = 1 + max(self._get_height(y.left), self._get_height(y.right))
         return y
 
-    def rebalance(self, node: AVLNode) -> AVLNode:
-        """Kiểm tra balance factor và gọi rotate phù hợp (LL, RR, LR, RL)."""
-        if node is None:
+    def _left_rotate(self, z):
+        y = z.right
+        T2 = y.left
+        
+        # Thực hiện xoay
+        y.left = z
+        z.right = T2
+        
+        # Cập nhật chiều cao
+        z.height = 1 + max(self._get_height(z.left), self._get_height(z.right))
+        y.height = 1 + max(self._get_height(y.left), self._get_height(y.right))
+        return y
+
+    def _get_min_value_node(self, node):
+        current = node
+        while current.left is not None:
+            current = current.left
+        return current
+
+    def _balance_node(self, node):
+        """ Hàm trung tâm: Tự động tính độ lệch và xoay cân bằng cây """
+        if not node:
             return node
 
-        # 1. Cập nhật lại chiều cao của nút hiện tại
-        self.update_height(node)
+        node.height = 1 + max(self._get_height(node.left), self._get_height(node.right))
+        balance = self._get_balance(node)
 
-        # 2. Lấy chỉ số cân bằng
-        balance = self._balance_factor(node)
+        # Trường hợp LỆCH TRÁI (Left Heavy)
+        if balance > 1:
+            if self._get_balance(node.left) < 0:
+                node.left = self._left_rotate(node.left)
+            return self._right_rotate(node)
 
-        # Trường hợp Trái Trái (LL)
-        if balance > 1 and self.balance_factor(node.left) >= 0:
-            return self.rotate_right(node)
+        # Trường hợp LỆCH PHẢI (Right Heavy)
+        if balance < -1:
+            if self._get_balance(node.right) > 0:
+                node.right = self._right_rotate(node.right)
+            return self._left_rotate(node)
 
-        # Trường hợp Trái Phải (LR)
-        if balance > 1 and self.balance_factor(node.left) < 0:
-            node.left = self.rotate_left(node.left)
-            return self.rotate_right(node)
+        return node
 
-        # Trường hợp Phải Phải (RR)
-        if balance < -1 and self.balance_factor(node.right) <= 0:
-            return self.rotate_left(node)
 
-        # Trường hợp Phải Trái (RL)
-        if balance < -1 and self.balance_factor(node.right) > 0:
-            node.right = self.rotate_right(node.right)
-            return self.rotate_left(node)
+    def insert(self, user: User):
+        self.root = self._insert_recursive(self.root, user)
 
-        return node  # Không mất cân bằng, trả về nút cũ
-
-    
-    def _insert_recursive(self, node, user):
+    def _insert_recursive(self, node, user: User):
         if not node:
             return AVLNode(user)
 
-        target_key = node._extract_last_name(user.name)
+        target_key = extract_last_name(user.name)
 
         if target_key < node.key_name:
             node.left = self._insert_recursive(node.left, user)
         elif target_key > node.key_name:
             node.right = self._insert_recursive(node.right, user)
         else:
+            # Gặp người trùng tên chính: Chỉ thêm đối tượng vào mảng có sẵn
             node.users.append(user)
             return node
 
         return self._balance_node(node)
 
-    def delete_recursive(self, node: Optional[AVLNode], user_id ):
-        """Đệ quy xóa nút và tái cân bằng hệ thống."""
-        if node is None:
-            return node
 
-        if user_id < node.user.id:
-            node.left = self.delete_recursive(node.left, user_id)
-        elif user_id > node.user.id:
-            node.right = self.delete_recursive(node.right, user_id)
+    def delete(self, full_name: str, user_id: int):
+        self.root = self._delete_recursive(self.root, full_name, user_id)
+    
+    def _delete_successor(self, node, key_name):
+        if node is None:
+            return None
+
+        if key_name < node.key_name:
+            node.left = self._delete_successor(node.left, key_name)
+
+        elif key_name > node.key_name:
+            node.right = self._delete_successor(node.right, key_name)
+
         else:
-            # Nút cần xóa nằm ở đây
-            if node.left is None or node.right is None:
-                temp = node.left if node.left else node.right
-                if temp is None:
-                    node = None
-                else:
-                    node = temp  # Sao chép các liên kết con
-            else:
-                # Nút có 2 con: tìm nút thay thế nhỏ nhất bên phải
-                temp = self.min_node(node.right)
-                node.user = temp.user
-                node.right = self.delete_recursive(node.right, temp.user.id)
+            # Node chỉ có 0 hoặc 1 con
+            if node.left is None:
+                return node.right
 
-        if node is None:
+            if node.right is None:
+                return node.left
+
+            # Trường hợp rất hiếm:
+            # successor cũng có 2 con
+            next_successor = self._get_min_value_node(node.right)
+
+            node.key_name = next_successor.key_name
+            node.users = next_successor.users.copy()
+
+            node.right = self._delete_successor(
+            node.right,
+            next_successor.key_name
+            )
+
+        return self._balance_node(node)
+
+    def _delete_recursive(self, node, full_name: str, user_id: int):
+        if not node:
             return node
-        return self.rebalance(node)
+
+        target_key = extract_last_name(full_name)
+
+        if target_key < node.key_name:
+            node.left = self._delete_recursive(node.left, full_name, user_id)
+        elif target_key > node.key_name:
+            node.right = self._delete_recursive(node.right, full_name, user_id)
+        else:
+            # Tìm thấy Node chứa nhóm người có tên cần xóa
+            # Bước 2.1: Duyệt tìm đúng User có ID trùng khớp trong mảng để xóa
+            for u in node.users:
+                if u.id == user_id:
+                    node.users.remove(u)
+                    break
+
+            # Bước 2.2: Nếu mảng vẫn còn người trùng tên khác -> Giữ nguyên Node trên cây
+            if len(node.users) > 0:
+                return node
+
+            # Bước 2.3: Mảng trống rỗng -> Tiến hành xóa Node này khỏi cấu trúc cây AVL
+            if node.left is None:
+                return node.right
+            elif node.right is None:
+                return node.left
+            temp = self._get_min_value_node(node.right)
+
+            # Sao chép dữ liệu của node thế mạng
+            node.key_name = temp.key_name
+            node.users = temp.users.copy()
+
+            # Xóa toàn bộ node thế mạng
+            node.right = self._delete_successor(node.right,temp.key_name)
+           
+
+        return self._balance_node(node)
+
     
-    def min_node(self, node: AVLNode) -> AVLNode:
-        if node == None:
-            return
-        current = node
-        while current.left is not None:
-            current = current.left
-        return current
-        """Tìm node nhỏ nhất (ngoài cùng bên trái)."""
-        pass
-    
-    # ── PUBLIC API ────────────────────────────────────────────────────
-    def update(self,user_id,node):
-        if
-        
-    def insert(self, user: User) -> None:
-        """
-        Thêm user vào AVL Tree theo key = name.
-
-        Args:
-            user (User): User cần thêm
-
-        Returns:
-            None
-        """
-        self.root = self.insert_recursive(self.root,user)
-        return
-
-    def delete(self, id: str) -> None:
-        """
-        Xóa node có key = name khỏi cây.
-
-        Args:
-            name (str): tên của user cần xóa
-
-        Returns:
-            None
-        """
-        self.root = self.delete_recursive(self.root, id)
-        return
-
-    def search_exact(self, name: str) -> Optional[User]:
-        """
-        Tìm chính xác user theo tên — O(log n).
-
-        Args:
-            name (str): tên đầy đủ
-
-        Returns:
-            User | None: User nếu tìm thấy, None nếu không
-        """
-
-        pass
-        name = name
-
-    def search_prefix(self, prefix: str) -> list[User]:
-        """
-        Fuzzy search: tìm tất cả user có tên chứa chuỗi prefix.
-        Dùng in-order traversal trên AVL + kiểm tra substring — O(n).
-
-        Args:
-            prefix (str): chuỗi con cần tìm (VD "Minh" → "Nhật Minh", "Minh Tuấn")
-
-        Returns:
-            list[User]: danh sách user khớp, sắp xếp theo tên
-        """
-        pass
-        if self.root == None:
-            return
-        print(self.node)
-        pass
-    def inorder(self, node) -> list[User]:
-        """
-        Duyệt in-order → danh sách user sắp xếp theo tên A→Z.
-
-        Returns:
-            list[User]: danh sách đã sắp xếp
-        """
-        # Nếu cây rỗng hoặc node rỗng, trả về danh sách trống [] thay vì None
-        # để ở main có thể duyệt loop_tên mà không bị lỗi 'NoneType' object is not iterable
-        if node is None:
-            return []
-        
+    def inorder_list(self) -> list[User]:
         result = []
-        
-        # Gọi hàm phụ trợ đệ quy để gom dữ liệu vào mảng 'result'
-        self._inorder_helper(node, result)
-        
+        self._inorder_recursive(self.root, result)
         return result
 
-    def _inorder_helper(self, node, result_list):
-        """ Hàm phụ trợ đệ quy theo quy tắc: Trái -> Gốc -> Phải """
-        if node is None:
+    def _inorder_recursive(self, node, result):
+        if not node:
             return
-            
-        # 1. Duyệt toàn bộ nhánh bên TRÁI trước
-        self._inorder_helper(node.left, result_list)
+        self._inorder_recursive(node.left, result)
+        result.extend(node.users)  # Đổ toàn bộ danh sách đối tượng tại node này vào kết quả
+        self._inorder_recursive(node.right, result)
         
-        # 2. Xử lý NODE GỐC hiện tại (Thêm đối tượng user vào danh sách)
-        result_list.append(node.user)
+
+    def update_user(self, old_full_name: str, user_id: int, new_name: str = None, new_age: int = None):
+        if not self.root:
+            return
+
+        target_key = extract_last_name(old_full_name)
+        current = self.root
+        target_user = None
+
+        # Tìm kiếm nhị phân để định vị nhanh Node chứa tên cũ
+        while current:
+            if target_key < current.key_name:
+                current = current.left
+            elif target_key > current.key_name:
+                current = current.right
+            else:
+                for u in current.users:
+                    if u.id == user_id:
+                        target_user = u
+                        break
+                break
+
+        if not target_user:
+            return
+
+        # Sửa thông tin phụ (Tuổi)
+        if new_age is not None:
+            target_user.age = new_age
+
+        # Sửa thông tin định tuyến (Họ tên)
+        if new_name is not None:
+            # Quy trình an toàn tuyệt đối cho cây: Xóa ở vị trí cũ -> Đổi tên -> Chèn lại vào vị trí mới
+            self.delete(old_full_name, user_id)
+            target_user.name = new_name
+            self.insert(target_user)
         
-        # 3. Duyệt toàn bộ nhánh bên PHẢI
-        self._inorder_helper(node.right, result_list)
+        
+
+
