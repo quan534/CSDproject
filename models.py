@@ -69,6 +69,10 @@ class FriendRequest:
     def __repr__(self):
         return f"FriendRequest({self.from_id} → {self.to_id}, {self.status.value})"
 
+    def __str__(self):
+        return f"FriendRequest({self.from_id} → {self.to_id}, {self.status.value})"
+
+
 
 class SuggestionResult:
     """
@@ -94,7 +98,7 @@ class SuggestionResult:
 
     def __repr__(self):
         return f"SuggestionResult({self.user.name}, mutual={self.mutual_count}, score={self.score})"
-        
+
     def __str__(self):
         return f"SuggestionResult({self.user.name}, mutual={self.mutual_count}, score={self.score})"
 

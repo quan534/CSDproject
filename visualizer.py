@@ -1,4 +1,5 @@
 from user_manager import UserManager
+import pyvis 
 
 class Visualizer:
     """
@@ -25,7 +26,76 @@ class Visualizer:
         Returns:
             str: đường dẫn file HTML đã tạo
         """
-        pass
+        from pyvis.network import Network
+
+        # highlight_ids mặc định là set rỗng nếu không truyền vào
+        highlight_ids = set(highlight_ids) if highlight_ids else set()
+
+        # ── Bảng màu theo location ────────────────────────────────────
+        # Mỗi location được gán 1 màu cố định để phân biệt trực quan
+        # Nếu location chưa có trong bảng thì dùng màu mặc định
+        LOCATION_COLORS = {
+            "HCM"     : "#FF6B6B",   # đỏ san hô
+            "HN"      : "#4ECDC4",   # xanh ngọc
+            "ĐN"      : "#45B7D1",   # xanh dương
+            "Cần Thơ" : "#96CEB4",   # xanh lá nhạt
+            "Huế"     : "#FFEAA7",   # vàng nhạt
+        }
+        DEFAULT_COLOR   = "#97C2FC"  # xanh dương nhạt — màu mặc định PyVis
+        HIGHLIGHT_COLOR = "#FF0000"  # đỏ tươi — node được highlight
+
+        # ── Khởi tạo PyVis Network ────────────────────────────────────
+        # height/width : kích thước khung hiển thị trong HTML
+        # bgcolor      : màu nền
+        # font_color   : màu chữ nhãn node
+        net = Network(
+            height     = "750px",
+            width      = "100%",
+            bgcolor    = "#222222",
+            font_color = "white"
+        )
+
+        # Bật physics để các node tự sắp xếp đẹp (spring layout)
+        net.barnes_hut()
+
+        # ── Thêm tất cả node (user) vào đồ thị ───────────────────────
+        all_users = self._um._users
+        print(all_users)
+
+        for user in all_users:
+            # Chọn màu: highlight > location > default
+            if user.user_id in highlight_ids:
+                color = HIGHLIGHT_COLOR
+            else:
+                color = LOCATION_COLORS.get(user.location, DEFAULT_COLOR)
+
+            # label : chữ hiển thị trên node
+            # title : tooltip khi hover chuột vào node
+            net.add_node(
+                user.user_id,
+                label = user.name,
+                title = (f"ID: {user.user_id}\n"
+                         f"Tuổi: {user.age}\n"
+                         f"Khu vực: {user.location}\n"
+                         f"Sở thích: {', '.join(user.interests)}"),
+                color = color,
+                size  = 20
+            )
+
+        # ── Thêm tất cả cạnh (friendship) vào đồ thị ─────────────────
+        # get_all_edges() trả về list[tuple(id1, id2)], mỗi cạnh 1 lần
+        edges = self._um.get_graph().get_all_edges()
+        print(edges)
+
+        for id1, id2 in edges:
+            net.add_edge(id1, id2, color="#AAAAAA")  # xám nhạt cho cạnh
+
+        # ── Xuất ra file HTML ─────────────────────────────────────────
+        net.save_graph(output_path)
+        
+
+        return output_path
+
 
     def render_ego_network(self, user_id: str,
                            output_path: str = "ego_network.html") -> str:

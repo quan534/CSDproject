@@ -2,16 +2,11 @@ from models       import User, FriendRequest, RequestStatus
 from avl_tree     import AVLTree
 from social_graph import SocialGraph
 from typing import Optional
+from datetime import datetime
+from collections import defaultdict
 
 class UserManager:
     """
-    Quản lý toàn bộ người dùng và quan hệ kết bạn.
-
-    Cấu trúc nội bộ:
-        _users    (list[User])              : mảng chính, theo yêu cầu đề bài
-        _id_map   (dict[str, User])         : tra cứu O(1) theo user_id
-        _avl_name (AVLTree)                 : tìm kiếm theo tên O(log n)
-        _graph    (SocialGraph)             : đồ thị bạn bè
         _pending  (dict[str, list[FriendRequest]]): pending[to_id] = [requests]
         _blocked  (dict[str, set[str]])     : blocked[user_id] = set bị chặn
     """
@@ -21,51 +16,40 @@ class UserManager:
         self._id_map:  dict     = {}
         self._avl_name = AVLTree()
         self._graph    = SocialGraph()
-        self._pending: dict     = {}
-        self._blocked: dict     = {}
+        self._pending: dict     = defaultdict(set)
+        self._blocked: dict     = defaultdict(set)
         self._next_id: int      = 1       # auto-increment ID
+
 
     def _generate_id(self) -> str:
         """Sinh user_id mới dạng 'U001', 'U002', ..."""
         gen_id=f"U{self._next_id:03}"
         self._next_id+=1
         return gen_id
+    
+    def _add_block(self,user_id,target_id) -> None:
+        user_block_list=self._blocked[user_id]
+        if target_id in user_block_list:
+            return False
+        else:
+            user_block_list.add(target_id)
+            return True
+        
+
 
     # ── CRUD ──────────────────────────────────────────────────────────
 
     def add_user(self, name: str, age: int, location: str,
                  interests: list) -> User:
-        """
-        Tạo và thêm người dùng mới vào hệ thống.
-        Đồng thời cập nhật: _users list, _id_map, AVL Tree, SocialGraph.
-
-        Args:
-            name      (str)       : Họ tên
-            age       (int)       : Tuổi
-            location  (str)       : Khu vực
-            interests (list[str]) : Danh sách sở thích
-
-        Returns:
-            User: object User vừa tạo (kèm user_id được gán)
-        """
         user_id=self._generate_id()
         user=User(user_id,name,age,location,interests)
         self._graph.add_node(user.user_id)
         self._avl_name.insert(user)
         self._id_map[user_id]=user
+        self._users.append(user)
         return user
 
     def remove_user(self, user_id: str) -> bool:
-        """
-        Xóa người dùng và dọn sạch toàn bộ dữ liệu liên quan:
-        pending requests, blocked list, graph edges.
-
-        Args:
-            user_id (str): ID người dùng cần xóa
-
-        Returns:
-            bool: True nếu xóa thành công, False nếu không tồn tại
-        """
         try:
             self._graph.remove_node(user_id)
             self._avl_name.delete(self.get_user(user_id))
@@ -89,52 +73,18 @@ class UserManager:
         pass
 
     def get_user(self, user_id: str) -> Optional[User]:
-        """
-        Lấy User theo ID — O(1) qua hash map.
-
-        Args:
-            user_id (str)
-
-        Returns:
-            User | None
-        """
         return self._id_map[user_id]
 
     def get_all_users(self) -> list:
-        """
-        Trả về toàn bộ danh sách users (bản copy của _users array).
-
-        Returns:
-            list[User]
-        """
         return self._users
 
     # ── SEARCH ────────────────────────────────────────────────────────
 
     def search_by_name_exact(self, name: str) -> Optional[User]:
-        """
-        Tìm kiếm chính xác theo tên qua AVL Tree — O(log n).
-
-        Args:
-            name (str): tên đầy đủ
-
-        Returns:
-            User | None
-        """
         return self._avl_name.search_exact(name)
         
 
     def search_by_name_fuzzy(self, query: str) -> list:
-        """
-        Tìm kiếm tương đối (fuzzy): tên chứa chuỗi query (không phân biệt hoa/thường).
-        Dùng linear scan trên _users array — O(n).
-
-        Args:
-            query (str): chuỗi con, VD "minh" → "Nhật Minh", "Minh Tuấn"
-
-        Returns:
-            list[User]: danh sách user khớp
-        """
         return [user for user in self._users if query in user.name]
         
 
@@ -153,12 +103,6 @@ class UserManager:
         pass
 
     def list_users_sorted(self) -> list:
-        """
-        Dùng in-order traversal của AVL Tree → danh sách sắp xếp theo tên A→Z.
-
-        Returns:
-            list[User]
-        """
         return self._avl_name.inorder()
 
     # ── FRIEND REQUEST FLOW ───────────────────────────────────────────
@@ -174,7 +118,15 @@ class UserManager:
         Returns:
             str: thông báo kết quả ("sent" / "already_friends" / "blocked" / "already_pending")
         """
-        pass
+        is_friend=self._graph.are_friends(from_id,to_id)
+        is_blocked=self.is_blocked(from_id,to_id)
+        is_sent=bool([e for e in self.get_pending_requests(to_id) if e.from_id==from_id])
+        if is_blocked: return "blocked"
+        if is_sent: return "already_pending"
+        if is_friend: return "already_friends"
+        self._pending[to_id].add(FriendRequest(from_id,to_id,RequestStatus.PENDING,datetime.now()))
+        return "sent"
+
 
     def cancel_friend_request(self, from_id: str, to_id: str) -> bool:
         """
@@ -187,7 +139,12 @@ class UserManager:
         Returns:
             bool: True nếu hủy thành công
         """
-        pass
+        for e in self.get_pending_requests(to_id):
+            if e.from_id == from_id and e.to_id == to_id:
+                self._pending.remove(e)
+                return True
+        return False
+
 
     def accept_friend_request(self, user_id: str, from_id: str) -> bool:
         """
@@ -200,7 +157,12 @@ class UserManager:
         Returns:
             bool: True nếu thành công
         """
-        pass
+
+        is_exist=self.cancel_friend_request(from_id,user_id)
+        if is_exist:
+            self._graph.add_edge(user_id,from_id)
+            return True
+        return False
 
     def decline_friend_request(self, user_id: str, from_id: str) -> bool:
         """
@@ -214,7 +176,13 @@ class UserManager:
         Returns:
             bool: True nếu thành công
         """
-        pass
+        is_exist=self.cancel_friend_request(from_id,user_id)
+        if is_exist:
+            self._graph.add_edge(user_id,from_id)
+            self._add_block(user_id,from_id)
+            return True
+        return False
+        
 
     def unfriend(self, user_id1: str, user_id2: str) -> bool:
         """
@@ -227,7 +195,13 @@ class UserManager:
         Returns:
             bool: True nếu thành công
         """
-        pass
+        if self._graph.are_friends(user_id1,user_id2):
+            self._graph.remove_edge(user_id1,user_id2)
+            return True
+        else:
+            return False
+
+    
 
     def get_pending_requests(self, user_id: str) -> list:
         """
@@ -239,7 +213,8 @@ class UserManager:
         Returns:
             list[FriendRequest]: các request có status = PENDING
         """
-        pass
+
+        return self._pending[user_id]
 
     # ── BLOCK / UNBLOCK ───────────────────────────────────────────────
 
@@ -255,7 +230,14 @@ class UserManager:
         Returns:
             bool: True nếu thành công
         """
-        pass
+        if self.is_blocked(user_id,target_id):
+            return False
+        else:
+            self.decline_friend_request(user_id,target_id)
+            self.unfriend(user_id,target_id)
+            return True
+        
+
 
     def unblock_user(self, user_id: str, target_id: str) -> bool:
         """
@@ -268,7 +250,12 @@ class UserManager:
         Returns:
             bool
         """
-        pass
+        if self.is_blocked(user_id,target_id):
+            self._blocked[user_id].remove(target_id)
+            return True
+        else:
+            return False
+        
 
     def is_blocked(self, user_id: str, target_id: str) -> bool:
         """
@@ -281,7 +268,8 @@ class UserManager:
         Returns:
             bool: True nếu một trong hai đã block nhau
         """
-        pass
+        return user_id in self._blocked[target_id]
+    
 
     def get_graph(self) -> SocialGraph:
         """Trả về SocialGraph để các module khác dùng."""

@@ -172,7 +172,7 @@ class CLIShell:
         elif sub_command == "get" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "user get <id>" ')
-            id=command_parsed[2]
+            id=command_parsed[2].upper()
             print(self._um.get_user(id))
         elif sub_command == "list" :
             if len(command_parsed) != 2:
@@ -295,7 +295,23 @@ class CLIShell:
 
     def _handle_viz(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'viz ...'"""
-        pass
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu subcommand")
+        else:
+            sub_command = command_parsed[1]
+        if sub_command == "network":
+            if len(command_parsed) not in [2,3]:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "viz network [output_path]" ')
+
+            if len(command_parsed) == 3:
+                output=int(command_parsed[2])
+                self._viz.render_full_network(output)
+            else:
+                self._viz.render_full_network()
+        else:
+            raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
+
+
 
     def _handle_block(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'block ...'"""
