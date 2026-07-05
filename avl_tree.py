@@ -23,7 +23,7 @@ class AVLNode:
 
 
 
-class AVLTreeByLastName:
+class AVLTree:
     def __init__(self):
         self.root = None
 
@@ -185,7 +185,7 @@ class AVLTreeByLastName:
         return self._balance_node(node)
 
     
-    def inorder_list(self) -> list[User]:
+    def inorder(self) -> list[User]:
         result = []
         self._inorder_recursive(self.root, result)
         return result
