@@ -888,6 +888,16 @@ class SuggestionEngine:
 #  FILE: network_analytics.py
 # ─────────────────────────────────────────────
 
+# ─────────────────────────────────────────────
+#  FILE: network_analytics.py
+# ─────────────────────────────────────────────
+
+import heapq
+
+from models       import User
+from user_manager import UserManager
+
+
 class NetworkAnalytics:
     """
     Phân tích mạng lưới nâng cao.
@@ -914,7 +924,22 @@ class NetworkAnalytics:
             }
             Trả về {"path": [], "degree": -1} nếu không kết nối.
         """
-        pass
+        # BFS thực sự nằm trong SocialGraph, ở đây chỉ gọi lại và làm giàu dữ liệu
+        path = self._graph.shortest_path(from_id, to_id)
+
+        if not path:
+            return {"path": [], "path_names": [], "degree": -1}
+
+        path_names = []
+        for uid in path:
+            user = self._um.get_user(uid)
+            path_names.append(user.name if user else uid)
+
+        return {
+            "path"      : path,
+            "path_names": path_names,
+            "degree"    : len(path) - 1,
+        }
 
     def top_influencers(self, top_n: int = 5) -> list:
         """
@@ -928,7 +953,30 @@ class NetworkAnalytics:
             list[dict]: [{"user": User, "friend_count": int}, ...]
                         sắp xếp giảm dần theo friend_count
         """
-        pass
+        if top_n <= 0:
+            return []
+
+        all_users = self._um.get_all_users()
+        if not all_users:
+            return []
+
+        # Heap key: (-degree, name) → khi heapify/pop sẽ ưu tiên degree cao nhất,
+        # và nếu bằng degree thì tên A→Z được lấy trước (tie-break ổn định).
+        heap = []
+        for user in all_users:
+            degree = self._graph.degree(user.user_id)
+            heapq.heappush(heap, (-degree, user.name, user.user_id, user))
+
+        result = []
+        n = min(top_n, len(heap))
+        for _ in range(n):
+            neg_degree, _name, _uid, user = heapq.heappop(heap)
+            result.append({
+                "user"        : user,
+                "friend_count": -neg_degree,
+            })
+
+        return result
 
     def detect_communities(self) -> list:
         """
@@ -946,7 +994,31 @@ class NetworkAnalytics:
             ]
             Sắp xếp giảm dần theo size.
         """
-        pass
+        components = self._graph.find_connected_components()
+
+        raw = []
+        for component in components:
+            members = []
+            for uid in component:
+                user = self._um.get_user(uid)
+                if user is not None:
+                    members.append(user)
+            # Sắp xếp thành viên theo tên cho dễ đọc / ổn định
+            members.sort(key=lambda u: u.name)
+            raw.append(members)
+
+        # Sắp xếp các community giảm dần theo kích thước
+        raw.sort(key=len, reverse=True)
+
+        result = []
+        for idx, members in enumerate(raw, start=1):
+            result.append({
+                "community_id": idx,
+                "size"        : len(members),
+                "members"     : members,
+            })
+
+        return result
 
     def network_stats(self) -> dict:
         """
@@ -963,7 +1035,35 @@ class NetworkAnalytics:
                 "isolated_users"   : int     # số user không có bạn nào
             }
         """
-        pass
+        all_users = self._um.get_all_users()
+        total_users = len(all_users)
+
+        total_friendships = len(self._graph.get_all_edges())
+
+        avg_friends = (2 * total_friendships / total_users) if total_users > 0 else 0.0
+
+        if total_users > 1:
+            density = (2 * total_friendships) / (total_users * (total_users - 1))
+        else:
+            density = 0.0
+
+        communities = self.detect_communities()
+        num_communities = len(communities)
+        largest_community = communities[0]["size"] if communities else 0
+
+        isolated_users = sum(
+            1 for user in all_users if self._graph.degree(user.user_id) == 0
+        )
+
+        return {
+            "total_users"      : total_users,
+            "total_friendships": total_friendships,
+            "avg_friends"      : avg_friends,
+            "density"          : density,
+            "num_communities"  : num_communities,
+            "largest_community": largest_community,
+            "isolated_users"   : isolated_users,
+        }
 
     def common_interest_score(self, user_id1: str, user_id2: str) -> dict:
         """
@@ -981,7 +1081,31 @@ class NetworkAnalytics:
                 "user2_only": list[str]
             }
         """
-        pass
+        user1 = self._um.get_user(user_id1)
+        user2 = self._um.get_user(user_id2)
+
+        if user1 is None or user2 is None:
+            return {
+                "common"    : [],
+                "score"     : 0.0,
+                "user1_only": [],
+                "user2_only": [],
+            }
+
+        set1 = set(user1.interests)
+        set2 = set(user2.interests)
+
+        common = set1 & set2
+        union  = set1 | set2
+
+        score = (len(common) / len(union)) if union else 0.0
+
+        return {
+            "common"    : sorted(common),
+            "score"     : score,
+            "user1_only": sorted(set1 - set2),
+            "user2_only": sorted(set2 - set1),
+        }
 
 
 # ─────────────────────────────────────────────
