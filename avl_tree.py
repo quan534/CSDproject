@@ -3,11 +3,20 @@ from typing import Optional
 
 class AVLNode:
     """Node nội bộ của AVL Tree.  value = User object."""
-    def __init__(self, user: User):       #
-        self.user   = user
+    def __init__(self,user):      #
+        self.key = self._extract_last_name(user.name)
+        self.list   = [user]
         self.left   = None
         self.right  = None
         self.height = 1            # dùng để tính balance factor
+
+    def _extract_last_name(self, name: str) -> str:
+        """Trích xuất từ cuối cùng của họ tên và chuẩn hóa"""
+        if not name:
+            return ""
+        clean_name = name.strip().lower()
+        words = clean_name.split()
+        return words[-1] if words else ""
 
 
 class AVLTree:
@@ -22,7 +31,7 @@ class AVLTree:
 
     def __init__(self):
         self.root = None
-
+    
     # ── INTERNAL HELPERS ──────────────────────────────────────────────
     def height(self, node: AVLNode) -> int:
         if node is None:
@@ -50,7 +59,7 @@ class AVLTree:
         node.height =1 + max(left,right)
         return
         """Cập nhật lại height sau khi rotate."""
-        pass
+        
 
     def rotate_right(self, y: AVLNode) -> AVLNode:
         x = y.left
@@ -101,20 +110,24 @@ class AVLTree:
 
         return node  # Không mất cân bằng, trả về nút cũ
 
-    def insert_recursive(self, node,user) -> AVLNode:
-        """Đệ quy insert + rebalance trên đường về."""
-        
-        if node is None:
+    
+    def _insert_recursive(self, node, user):
+        if not node:
             return AVLNode(user)
-        if user.id > node,user.id:
-            node.right = self.insert_recursive(node.right,user)
-        elif user.id < node.user.id:
-            node.left = self.insert_recursive(node.left,user)
-        else:
-            return node
-        return self.rebalance(node)
 
-    def delete_recursive(self, node: Optional[AVLNode], user_id: int):
+        target_key = node._extract_last_name(user.name)
+
+        if target_key < node.key_name:
+            node.left = self._insert_recursive(node.left, user)
+        elif target_key > node.key_name:
+            node.right = self._insert_recursive(node.right, user)
+        else:
+            node.users.append(user)
+            return node
+
+        return self._balance_node(node)
+
+    def delete_recursive(self, node: Optional[AVLNode], user_id ):
         """Đệ quy xóa nút và tái cân bằng hệ thống."""
         if node is None:
             return node
@@ -150,9 +163,11 @@ class AVLTree:
         return current
         """Tìm node nhỏ nhất (ngoài cùng bên trái)."""
         pass
-
+    
     # ── PUBLIC API ────────────────────────────────────────────────────
-
+    def update(self,user_id,node):
+        if
+        
     def insert(self, user: User) -> None:
         """
         Thêm user vào AVL Tree theo key = name.
@@ -163,7 +178,7 @@ class AVLTree:
         Returns:
             None
         """
-        self.insert_recursive(self.root,user)
+        self.root = self.insert_recursive(self.root,user)
         return
 
     def delete(self, id: str) -> None:
@@ -176,7 +191,8 @@ class AVLTree:
         Returns:
             None
         """
-        self.delete_recursive(self.root, id)
+        self.root = self.delete_recursive(self.root, id)
+        return
 
     def search_exact(self, name: str) -> Optional[User]:
         """
@@ -188,7 +204,9 @@ class AVLTree:
         Returns:
             User | None: User nếu tìm thấy, None nếu không
         """
+
         pass
+        name = name
 
     def search_prefix(self, prefix: str) -> list[User]:
         """
@@ -202,13 +220,39 @@ class AVLTree:
             list[User]: danh sách user khớp, sắp xếp theo tên
         """
         pass
-
-    def inorder(self) -> list[User]:
+        if self.root == None:
+            return
+        print(self.node)
+        pass
+    def inorder(self, node) -> list[User]:
         """
         Duyệt in-order → danh sách user sắp xếp theo tên A→Z.
 
         Returns:
             list[User]: danh sách đã sắp xếp
         """
-        pass
+        # Nếu cây rỗng hoặc node rỗng, trả về danh sách trống [] thay vì None
+        # để ở main có thể duyệt loop_tên mà không bị lỗi 'NoneType' object is not iterable
+        if node is None:
+            return []
+        
+        result = []
+        
+        # Gọi hàm phụ trợ đệ quy để gom dữ liệu vào mảng 'result'
+        self._inorder_helper(node, result)
+        
+        return result
 
+    def _inorder_helper(self, node, result_list):
+        """ Hàm phụ trợ đệ quy theo quy tắc: Trái -> Gốc -> Phải """
+        if node is None:
+            return
+            
+        # 1. Duyệt toàn bộ nhánh bên TRÁI trước
+        self._inorder_helper(node.left, result_list)
+        
+        # 2. Xử lý NODE GỐC hiện tại (Thêm đối tượng user vào danh sách)
+        result_list.append(node.user)
+        
+        # 3. Duyệt toàn bộ nhánh bên PHẢI
+        self._inorder_helper(node.right, result_list)
