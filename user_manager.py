@@ -52,7 +52,7 @@ class UserManager:
     def remove_user(self, user_id: str) -> bool:
         try:
             self._graph.remove_node(user_id)
-            self._avl_name.delete(self.get_user(user_id))
+            self._avl_name.delete(self.get_user(user_id).name)
             return True
         except Exception as e:
             return False
