@@ -53,6 +53,7 @@ class UserManager:
         try:
             self._graph.remove_node(user_id)
             self._avl_name.delete(self.get_user(user_id).name)
+            self._users.remove(self.get_user(user_id))
             return True
         except Exception as e:
             return False
@@ -143,7 +144,7 @@ class UserManager:
         """
         for e in self.get_pending_requests(to_id):
             if e.from_id == from_id and e.to_id == to_id:
-                self._pending.remove(e)
+                self._pending[to_id].remove(e)
                 return True
         return False
 
@@ -279,5 +280,5 @@ class UserManager:
     
     # khác
     def get_mutual_friends(self,id1,id2):
-        return self._graph.get_mutual_friends()
+        return self._graph.get_mutual_friends(id1,id2)
 

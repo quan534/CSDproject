@@ -2,7 +2,7 @@ import json
 import csv
 import random
 import time
-import datetime
+from datetime import datetime
 from social_graph import SocialGraph 
 from avl_tree import AVLTree
 from models       import User

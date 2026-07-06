@@ -154,8 +154,8 @@ class CLIShell:
             sub_command = command_parsed[1]
         if sub_command == "add":
             if len(command_parsed) != 6:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "user add <name> <age> <location> <interest1,interest2,...>" ')
-            name=command_parsed[2]
+                raise Exception('Sai cú pháp. Cú pháp đúng: "user add <Nguyen_Van_A> <age> <location> <interest1,interest2,...>" ')
+            name=command_parsed[2].replace("_", " ")
             age=int(command_parsed[3])
             location=command_parsed[4]
             interest=command_parsed[5].split(",")
@@ -206,10 +206,10 @@ class CLIShell:
             self._um.send_friend_request(from_id,to_id)
         elif sub_command == "accept":
             if len(command_parsed) != 4:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <from_id> <to_id>" ')
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <user_id> <to_id>" ')
             user_id=command_parsed[2]
             from_id=command_parsed[3]
-            self._um.send_friend_request(user_id,from_id)
+            self._um.accept_friend_request(user_id,from_id)
         elif sub_command == "remove" :
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend remove <id>" ')
@@ -258,13 +258,13 @@ class CLIShell:
             elif "--filter" in e:
                 pass
             elif "age" in e:
-                age_range=tuple(e.replace("age=", "").split("-"))
+                age_range=tuple(int(e2) for e2 in e.replace("age=", "").split("-"))
             elif "location" in e:
                 location=tuple(e.replace("location=", ""))
             elif "interest" in e:
                 interest=tuple(e.replace("interests=", "").split(","))
             elif "mutual" in e:
-                min_mutual=tuple(e.replace("mutual=", ""))
+                min_mutual=int(e.replace("mutual=", ""))
             else:
                 raise Exception(f"Filter {e} không hợp lệ")
         
@@ -286,7 +286,20 @@ class CLIShell:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "data generate [num_users]" ')
             num_users=int(command_parsed[2])
             self._dm.generate_sample_data(num_users)
-        
+        elif sub_command == "export":
+            export_type=command_parsed[2]
+            if export_type == "json":
+                if len(command_parsed) not in [3,4]:
+                    raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath>" ')
+                else:
+                    self._dm.export_json(command_parsed[3])
+        elif sub_command == "import":
+            import_type=command_parsed[2]
+            if import_type == "json":
+                if len(command_parsed) not in [3,4]:
+                    raise Exception('Sai cú pháp. Cú pháp đúng: "data import json <filepath>" ')
+                else:
+                    self._dm.import_json(command_parsed[3])
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
 
@@ -308,6 +321,7 @@ class CLIShell:
                 self._viz.render_full_network(output)
             else:
                 self._viz.render_full_network()
+
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
 
