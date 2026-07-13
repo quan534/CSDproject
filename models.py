@@ -29,7 +29,7 @@ class User:
         self.interests = interests if interests is not None else []
 
     def __repr__(self):
-        return f"User({self.user_id}, {self.name}, {self.age}, {self.location})"
+        return f"User({self.user_id}, {self.name}, {self.age}, {self.location}, {self.interests})"
 
     def to_dict(self) -> dict:
         # return một dict với keys, values tương ứng là tên các attributes và giá trị của nó của của đối tượng user
@@ -44,7 +44,7 @@ class User:
         pass
 
     def __str__(self):
-        return f"User({self.user_id}, {self.name}, {self.age}, {self.location})"
+        return f"User({self.user_id}, {self.name}, {self.age}, {self.location}, {self.interests})"
 
 
 class FriendRequest:

@@ -14,12 +14,12 @@ class CLIShell:
 
     COMMANDS (nhóm theo chức năng):
     ─── USER MANAGEMENT ───────────────────────────────
-      user add <name> <age> <location> <interest1,interest2,...>
+      user add <Nguyen_Van_A> <age> <Da_Nang> <da_bong,cau_long,...>
       user remove <id>
       user update <id> <field> <value>
       user get <id>
       user list
-      user search <query>          ← fuzzy search theo tên
+      user search <Van_A>          ← fuzzy search theo tên
       user search-age <min> <max>  ← tìm theo khoảng tuổi
 
     ─── FRIEND MANAGEMENT ─────────────────────────────
@@ -92,9 +92,11 @@ class CLIShell:
         print("============================")
         self._running=True
         while self._running:
-            command=input("InputCommand> ").lower()
+            command=input("InputCommand> ")
             try:
                 command_parsed=self._parse_command(command)
+                if not command_parsed:
+                    continue
                 self._dispatch(command_parsed)
             except Exception as e:
                 print("Đã xảy ra lỗi:", e)
@@ -103,8 +105,8 @@ class CLIShell:
                 print('Nhập "help" để xem lệnh\n\n')
         pass
 
-    def _parse_command(self, raw: str) -> tuple:
-        "chia token cho command"
+    def _parse_command(self, raw: str) -> list:
+        "chia token cho command, không hạ chữ thường để giữ nguyên tên/location"
         return raw.strip().split()
 
     # def _parse_filter_args(self, kwargs: dict) -> FilterCriteria:
@@ -123,7 +125,7 @@ class CLIShell:
         """
         Điều hướng lệnh đến handler tương ứng.
         """
-        handler_method=command_parsed[0]
+        handler_method=command_parsed[0].lower()
         if handler_method == "user":
             self._handle_user(command_parsed)
         elif handler_method == "suggest":
@@ -151,10 +153,11 @@ class CLIShell:
         if len(command_parsed) == 1:
             raise Exception("Thiếu subcommand")
         else:
-            sub_command = command_parsed[1]
+            sub_command = command_parsed[1].lower()
         if sub_command == "add":
             if len(command_parsed) != 6:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "user add <Nguyen_Van_A> <age> <location> <interest1,interest2,...>" ')
+                raise Exception('''Sai cú pháp. Cú pháp đúng: "user add <Nguyen_Van_A> <age> <Da_Nang> <da_bong,cau_long,...>" 
+                                Lỗi thường gặp: mỗi mục phải là một từ duy nhất, sử dụng gạch dưới thay cho dấu cách, giữa các sở thích không có dấu cách''')
             name=command_parsed[2].replace("_", " ")
             age=int(command_parsed[3])
             location=command_parsed[4]
@@ -168,7 +171,20 @@ class CLIShell:
             id=command_parsed[2]
             self._um.remove_user(id)
         elif sub_command == "update" :
-            pass
+            if len(command_parsed) != 5:
+                raise Exception('''Sai cú pháp. Cú pháp đúng: "user update <id> <field> <value>" 
+                                Lỗi thường gặp: mỗi mục phải là một từ duy nhất, sử dụng gạch dưới thay cho dấu cách, giữa các sở thích không có dấu cách''')
+            id=command_parsed[2].upper()
+            field=command_parsed[3].lower()
+            value=command_parsed[4]
+            if field == "age":
+                value = int(value)
+            elif field == "name":
+                value = value.replace("_", " ")
+            elif field == "interests":
+                value = value.split(",")
+            ok = self._um.update_user(id, **{field: value})
+            print("Cập nhật thành công" if ok else "Không tìm thấy user")
         elif sub_command == "get" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "user get <id>" ')
@@ -185,11 +201,12 @@ class CLIShell:
         elif sub_command == "search-age" :
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "user search-age <min> <max>  ← tìm theo khoảng tuổi" ')
-            min_age=command_parsed[3]
-            max_age=command_parsed[4]
+            min_age=int(command_parsed[2])
+            max_age=int(command_parsed[3])
             print(self._um.search_by_age_range(min_age,max_age))
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
+            
 
 
     def _handle_friend(self, command_parsed: list) -> None:
@@ -197,40 +214,52 @@ class CLIShell:
         if len(command_parsed) == 1:
             raise Exception("Thiếu subcommand")
         else:
-            sub_command = command_parsed[1]
+            sub_command = command_parsed[1].lower()
         if sub_command == "request":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend request <from_id> <to_id>" ')
-            from_id=command_parsed[2]
-            to_id=command_parsed[3]
-            self._um.send_friend_request(from_id,to_id)
+            from_id=command_parsed[2].upper()
+            to_id=command_parsed[3].upper()
+            print(self._um.send_friend_request(from_id,to_id))
+        elif sub_command == "cancel":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend cancel <from_id> <to_id>" ')
+            from_id=command_parsed[2].upper()
+            to_id=command_parsed[3].upper()
+            print(self._um.cancel_friend_request(from_id,to_id))
         elif sub_command == "accept":
             if len(command_parsed) != 4:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <user_id> <to_id>" ')
-            user_id=command_parsed[2]
-            from_id=command_parsed[3]
-            self._um.accept_friend_request(user_id,from_id)
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <user_id> <from_id>" ')
+            user_id=command_parsed[2].upper()
+            from_id=command_parsed[3].upper()
+            print(self._um.accept_friend_request(user_id,from_id))
+        elif sub_command == "decline":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend decline <user_id> <from_id>" ')
+            user_id=command_parsed[2].upper()
+            from_id=command_parsed[3].upper()
+            print(self._um.decline_friend_request(user_id,from_id))
         elif sub_command == "remove" :
             if len(command_parsed) != 4:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "friend remove <id>" ')
-            id1=command_parsed[2]
-            id2=command_parsed[3]
-            self._um.remove_user(id)
+                raise Exception('Sai cú pháp. Cú pháp đúng: "friend remove <id1> <id2>" ')
+            id1=command_parsed[2].upper()
+            id2=command_parsed[3].upper()
+            print(self._um.unfriend(id1,id2))
         elif sub_command == "list" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend list <user_id>" ')
-            user_id=command_parsed[2]
-            self._um.remove_user(user_id)
+            user_id=command_parsed[2].upper()
+            print(self._um.get_graph().get_friends(user_id))
         elif sub_command == "pending" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend pending <user_id>" ')
-            user_id=command_parsed[2]
+            user_id=command_parsed[2].upper()
             print(self._um.get_pending_requests(user_id))
         elif sub_command == "mutual" :
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend mutual <id1> <id2>" ')
-            id1=command_parsed[2]
-            id2=command_parsed[3]
+            id1=command_parsed[2].upper()
+            id2=command_parsed[3].upper()
             print(self._um.get_mutual_friends(id1,id2))
 
         else:
@@ -260,67 +289,114 @@ class CLIShell:
             elif "age" in e:
                 age_range=tuple(int(e2) for e2 in e.replace("age=", "").split("-"))
             elif "location" in e:
-                location=tuple(e.replace("location=", ""))
+                location=e.replace("location=", "")
             elif "interest" in e:
                 interest=tuple(e.replace("interests=", "").split(","))
             elif "mutual" in e:
                 min_mutual=int(e.replace("mutual=", ""))
             else:
-                raise Exception(f"Filter {e} không hợp lệ")
+                raise Exception(f'''Filter {e} không hợp lệ.
+                                Lỗi thường gặp: mỗi mục phải là một từ duy nhất, sử dụng gạch dưới thay cho dấu cách, giữa các sở thích không có dấu cách''')
+
         
 
-        print(self._se.suggest(user_id,top_k,FilterCriteria(age_range,location,interest,min_mutual)))
+        results = self._se.suggest(user_id,top_k,FilterCriteria(age_range,location,interest,min_mutual))
+        if not results:
+            print("Không có gợi ý nào.")
+        for r in results:
+            self._print_suggestion(r)
 
     def _handle_analytics(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'analytics ...'"""
-        pass
+        if len(command_parsed) == 1:
+            raise Exception("Thiếu subcommand")
+        else:
+            sub_command = command_parsed[1].lower()
+        if sub_command == "path":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "analytics path <id1> <id2>" ')
+            id1=command_parsed[2].upper()
+            id2=command_parsed[3].upper()
+            print(self._ana.shortest_path(id1,id2))
+        elif sub_command == "influencer":
+            if len(command_parsed) not in [2,3]:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "analytics influencer [top_n]" ')
+            top_n = int(command_parsed[2]) if len(command_parsed)==3 else 5
+            print(self._ana.top_influencers(top_n))
+        elif sub_command == "community":
+            if len(command_parsed) != 2:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "analytics community" ')
+            print(self._ana.detect_communities())
+        elif sub_command == "stats":
+            if len(command_parsed) != 2:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "analytics stats" ')
+            print(self._ana.network_stats())
+        elif sub_command == "similarity":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "analytics similarity <id1> <id2>" ')
+            id1=command_parsed[2].upper()
+            id2=command_parsed[3].upper()
+            print(self._ana.common_interest_score(id1,id2))
+        else:
+            raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
 
     def _handle_data(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'data ...'"""
         if len(command_parsed) == 1:
             raise Exception("Thiếu subcommand")
         else:
-            sub_command = command_parsed[1]
+            sub_command = command_parsed[1].lower()
         if sub_command == "generate":
-            if len(command_parsed) != 3:
+            if len(command_parsed) not in [2,3]:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "data generate [num_users]" ')
-            num_users=int(command_parsed[2])
-            self._dm.generate_sample_data(num_users)
+            num_users = int(command_parsed[2]) if len(command_parsed)==3 else 50
+            print(self._dm.generate_sample_data(num_users))
         elif sub_command == "export":
-            export_type=command_parsed[2]
+            if len(command_parsed) < 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath>" hoặc "data export csv <users_path> <edges_path>" ')
+            export_type=command_parsed[2].lower()
             if export_type == "json":
-                if len(command_parsed) not in [3,4]:
+                if len(command_parsed) != 4:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath>" ')
-                else:
-                    self._dm.export_json(command_parsed[3])
+                print(self._dm.export_json(command_parsed[3]))
+            elif export_type == "csv":
+                if len(command_parsed) != 5:
+                    raise Exception('Sai cú pháp. Cú pháp đúng: "data export csv <users_path> <edges_path>" ')
+                print(self._dm.export_csv(command_parsed[3], command_parsed[4]))
+            else:
+                raise Exception(f'data export không hỗ trợ định dạng "{export_type}"')
         elif sub_command == "import":
-            import_type=command_parsed[2]
+            if len(command_parsed) < 3:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "data import json <filepath>" hoặc "data import csv <users_path> <edges_path>" ')
+            import_type=command_parsed[2].lower()
             if import_type == "json":
-                if len(command_parsed) not in [3,4]:
+                if len(command_parsed) != 4:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data import json <filepath>" ')
-                else:
-                    self._dm.import_json(command_parsed[3])
+                print(self._dm.import_json(command_parsed[3]))
+            elif import_type == "csv":
+                if len(command_parsed) != 5:
+                    raise Exception('Sai cú pháp. Cú pháp đúng: "data import csv <users_path> <edges_path>" ')
+                print(self._dm.import_csv(command_parsed[3], command_parsed[4]))
+            else:
+                raise Exception(f'data import không hỗ trợ định dạng "{import_type}"')
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
-
-
-        pass
 
     def _handle_viz(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'viz ...'"""
         if len(command_parsed) == 1:
             raise Exception("Thiếu subcommand")
         else:
-            sub_command = command_parsed[1]
+            sub_command = command_parsed[1].lower()
         if sub_command == "network":
             if len(command_parsed) not in [2,3]:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "viz network [output_path]" ')
 
             if len(command_parsed) == 3:
-                output=int(command_parsed[2])
-                self._viz.render_full_network(output)
+                output=command_parsed[2]
+                print(self._viz.render_full_network(output))
             else:
-                self._viz.render_full_network()
+                print(self._viz.render_full_network())
 
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
@@ -329,7 +405,15 @@ class CLIShell:
 
     def _handle_block(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh 'block ...'"""
-        pass
+        if len(command_parsed) != 3:
+            raise Exception('Sai cú pháp. Cú pháp đúng: "block <user_id> <target_id>" hoặc "unblock <user_id> <target_id>" ')
+        action    = command_parsed[0].lower()
+        user_id   = command_parsed[1].upper()
+        target_id = command_parsed[2].upper()
+        if action == "block":
+            print(self._um.block_user(user_id, target_id))
+        else:
+            print(self._um.unblock_user(user_id, target_id))
 
     def _handle_misc(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh khác"""
@@ -345,12 +429,12 @@ class CLIShell:
             if help_category == "user":
                 print("""
 ─── USER MANAGEMENT ───────────────────────────────
-    user add <name> <age> <location> <interest1,interest2,...>
+    user add <Nguyen_Van_A> <age> <Da_Nang> <da_bong,cau_long,...>
     user remove <id>
     user update <id> <field> <value>
     user get <id>
     user list
-    user search <query>          ← fuzzy search theo tên
+    user search <Van_A>          ← fuzzy search theo tên
     user search-age <min> <max>  ← tìm theo khoảng tuổi
 """)
             elif help_category == "friend":
@@ -418,7 +502,7 @@ class CLIShell:
                 print("""
     COMMANDS (nhóm theo chức năng):
 ─── USER MANAGEMENT ───────────────────────────────
-    user add <name> <age> <location> <interest1,interest2,...>
+    user add <Nguyen_Van_A> <age> <Da_Nang> <da_bong,cau_long,...>
     user remove <id>
     user update <id> <field> <value>
     user get <id>
@@ -473,8 +557,12 @@ class CLIShell:
     clear
     exit
 """)
+            else:
+                print(f'Không có mục trợ giúp "{help_category}". '
+                      'Dùng: user/friend/block/suggestion/analytics/data/visualize/misc/all')
         elif sub_command == "clear":
-            pass
+            import os
+            os.system("cls" if os.name == "nt" else "clear")
         elif sub_command == "exit":
             self._running=False
         
@@ -488,10 +576,30 @@ class CLIShell:
             headers (list[str]): tiêu đề cột
             rows    (list[list]): dữ liệu từng hàng
         """
-        pass
+        if not headers:
+            return
+        str_rows = [[str(cell) for cell in row] for row in rows]
+        col_widths = [len(h) for h in headers]
+        for row in str_rows:
+            for i, cell in enumerate(row):
+                col_widths[i] = max(col_widths[i], len(cell))
+
+        def format_row(row):
+            return " | ".join(cell.ljust(col_widths[i]) for i, cell in enumerate(row))
+
+        header_line = format_row(headers)
+        separator   = "-+-".join("-" * w for w in col_widths)
+        print(header_line)
+        print(separator)
+        for row in str_rows:
+            print(format_row(row))
 
     def _print_suggestion(self, result: SuggestionResult) -> None:
         """
         In một gợi ý kèm lý do: "3 bạn chung: An, Bình, Chi | Sở thích: music, travel"
         """
-        pass
+        mutual_str   = ", ".join(result.mutual_names) if result.mutual_names else "không có"
+        interest_str = ", ".join(result.common_interests) if result.common_interests else "không có"
+        print(f"- {result.user.name} ({result.user.user_id}) | "
+              f"{result.mutual_count} bạn chung: {mutual_str} | "
+              f"Sở thích chung: {interest_str} | Điểm: {result.score:.2f}")

@@ -27,7 +27,7 @@ class UserManager:
         self._next_id+=1
         return gen_id
     
-    def _add_block(self,user_id,target_id) -> None:
+    def _add_block(self,user_id,target_id) -> bool:
         user_block_list=self._blocked[user_id]
         if target_id in user_block_list:
             return False
@@ -50,13 +50,16 @@ class UserManager:
         return user
 
     def remove_user(self, user_id: str) -> bool:
-        try:
-            self._graph.remove_node(user_id)
-            self._avl_name.delete(self.get_user(user_id).name)
-            self._users.remove(self.get_user(user_id))
-            return True
-        except Exception as e:
+        user = self.get_user(user_id)
+        if user is None:
             return False
+        # Xóa khỏi AVL trước (cần đủ name + user_id), rồi mới xóa khỏi graph
+        # để tránh trạng thái nửa xóa nếu có lỗi xảy ra.
+        self._avl_name.delete(user.name, user.user_id)
+        self._graph.remove_node(user_id)
+        self._users.remove(user)
+        del self._id_map[user_id]
+        return True
 
 
     def update_user(self, user_id: str, **kwargs) -> bool:
@@ -71,12 +74,30 @@ class UserManager:
         Returns:
             bool: True nếu thành công
         """
-        pass
-        
+        user = self.get_user(user_id)
+        if user is None:
+            return False
+
+        new_name = kwargs.get("name")
+        new_age  = kwargs.get("age")
+
+        if "location" in kwargs:
+            user.location = kwargs["location"]
+        if "interests" in kwargs:
+            user.interests = kwargs["interests"]
+
+        # name/age đi qua AVLTree.update_user để đồng bộ vị trí trên cây
+        if new_name is not None or new_age is not None:
+            self._avl_name.update_user(
+                user.name, user.user_id,
+                new_name=new_name, new_age=new_age
+            )
+
+        return True
 
 
     def get_user(self, user_id: str) -> Optional[User]:
-        return self._id_map[user_id]
+        return self._id_map.get(user_id)
 
     def get_all_users(self) -> list:
         return self._users
@@ -103,7 +124,7 @@ class UserManager:
         Returns:
             list[User]: danh sách user trong khoảng tuổi
         """
-        pass
+        return [u for u in self._users if min_age <= u.age <= max_age]
 
     def list_users_sorted(self) -> list:
         return self._avl_name.inorder()
@@ -181,7 +202,6 @@ class UserManager:
         """
         is_exist=self.cancel_friend_request(from_id,user_id)
         if is_exist:
-            self._graph.add_edge(user_id,from_id)
             self._add_block(user_id,from_id)
             return True
         return False
@@ -217,7 +237,7 @@ class UserManager:
             list[FriendRequest]: các request có status = PENDING
         """
 
-        return self._pending[user_id]
+        return list(self._pending.get(user_id, set()))
 
     # ── BLOCK / UNBLOCK ───────────────────────────────────────────────
 
@@ -236,8 +256,12 @@ class UserManager:
         if self.is_blocked(user_id,target_id):
             return False
         else:
-            self.decline_friend_request(user_id,target_id)
+            # Hủy request đang chờ (nếu có) theo cả hai chiều, rồi hủy kết bạn
+            self.cancel_friend_request(target_id,user_id)
+            self.cancel_friend_request(user_id,target_id)
             self.unfriend(user_id,target_id)
+            # Luôn thêm vào danh sách block, không phụ thuộc side-effect của hàm khác
+            self._add_block(user_id,target_id)
             return True
         
 
@@ -253,8 +277,9 @@ class UserManager:
         Returns:
             bool
         """
-        if self.is_blocked(user_id,target_id):
-            self._blocked[user_id].remove(target_id)
+        # Chỉ bỏ chặn đúng theo chiều user_id đã block target_id (không đụng chiều ngược lại)
+        if target_id in self._blocked.get(user_id, set()):
+            self._blocked[user_id].discard(target_id)
             return True
         else:
             return False
@@ -271,7 +296,9 @@ class UserManager:
         Returns:
             bool: True nếu một trong hai đã block nhau
         """
-        return user_id in self._blocked[target_id]
+        blocked_by_target = user_id in self._blocked.get(target_id, set())
+        blocked_by_user    = target_id in self._blocked.get(user_id, set())
+        return blocked_by_target or blocked_by_user
     
 
     def get_graph(self) -> SocialGraph:

@@ -159,7 +159,7 @@ class AVLTree:
             # Tìm thấy Node chứa nhóm người có tên cần xóa
             # Bước 2.1: Duyệt tìm đúng User có ID trùng khớp trong mảng để xóa
             for u in node.users:
-                if u.id == user_id:
+                if u.user_id == user_id:
                     node.users.remove(u)
                     break
 
@@ -197,6 +197,26 @@ class AVLTree:
         result.extend(node.users)  # Đổ toàn bộ danh sách đối tượng tại node này vào kết quả
         self._inorder_recursive(node.right, result)
         
+    def search_exact(self, full_name: str) -> list:
+        
+        if not self.root or not full_name:
+            return []
+ 
+        target_key = extract_last_name(full_name)
+        normalized_full_name = unicodedata.normalize('NFC', full_name).strip().lower()
+ 
+        current = self.root
+        while current:
+            if target_key < current.key_name:
+                current = current.left
+            elif target_key > current.key_name:
+                current = current.right
+            else:
+                return [
+                    u for u in current.users
+                    if unicodedata.normalize('NFC', u.name).strip().lower() == normalized_full_name
+                ]
+        return []
 
     def update_user(self, old_full_name: str, user_id: int, new_name: str = None, new_age: int = None):
         if not self.root:
@@ -214,7 +234,7 @@ class AVLTree:
                 current = current.right
             else:
                 for u in current.users:
-                    if u.id == user_id:
+                    if u.user_id == user_id:
                         target_user = u
                         break
                 break
