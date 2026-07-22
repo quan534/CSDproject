@@ -68,7 +68,7 @@ class Visualizer:
 
         # ── Thêm tất cả node (user) vào đồ thị ───────────────────────
         all_users = self._um._users
-        print(all_users)
+        # print(all_users)
 
         for user in all_users:
             # Chọn màu: highlight > location > default
@@ -82,18 +82,19 @@ class Visualizer:
             net.add_node(
                 user.user_id,
                 label = user.name,
-                title = (f"ID: {user.user_id}\n"
+                title = (f"Name: {user.name}\n"
+                         f"ID: {user.user_id}\n"
                          f"Tuổi: {user.age}\n"
                          f"Khu vực: {user.location}\n"
                          f"Sở thích: {', '.join(user.interests)}"),
                 color = color,
-                size  = 20
+                size  = 100
             )
 
         # ── Thêm tất cả cạnh (friendship) vào đồ thị ─────────────────
         # get_all_edges() trả về list[tuple(id1, id2)], mỗi cạnh 1 lần
         edges = self._um.get_graph().get_all_edges()
-        print(edges)
+        # print(edges)
 
         for id1, id2 in edges:
             net.add_edge(id1, id2, color="#AAAAAA")  # xám nhạt cho cạnh
