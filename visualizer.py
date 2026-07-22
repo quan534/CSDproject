@@ -1,5 +1,10 @@
 from user_manager import UserManager
-import pyvis 
+try:
+    import pyvis 
+    has_pyvis=True
+except:
+    has_pyvis=False
+    print("Chức năng visualizer sẽ không hoạt động, vui lòng tải module pyvis.")
 
 class Visualizer:
     """
@@ -26,6 +31,9 @@ class Visualizer:
         Returns:
             str: đường dẫn file HTML đã tạo
         """
+        if has_pyvis is False:
+            print("Chưa tải module pyvis")
+            return
         from pyvis.network import Network
 
         # highlight_ids mặc định là set rỗng nếu không truyền vào
@@ -93,7 +101,15 @@ class Visualizer:
         # ── Xuất ra file HTML ─────────────────────────────────────────
         net.save_graph(output_path)
         
-
+        # Thêm thư viện ở đầu hàm (hoặc đầu file Python của bạn)
+        import webbrowser
+        import os
+        
+        # Lấy đường dẫn tuyệt đối của file để trình duyệt có thể đọc được chính xác
+        absolute_path = os.path.abspath(output_path)
+        
+        # Tự động mở file trên trình duyệt mặc định
+        webbrowser.open(f"file://{absolute_path}")
         return output_path
 
 
@@ -110,6 +126,9 @@ class Visualizer:
         Returns:
             str: đường dẫn file HTML
         """
+        if has_pyvis is False:
+            print("Chưa tải module pyvis")
+            return
         pass
 
     def render_path(self, path_ids: list,
@@ -124,6 +143,9 @@ class Visualizer:
         Returns:
             str: đường dẫn file HTML
         """
+        if has_pyvis is False:
+            print("Chưa tải module pyvis")
+            return
         pass
 
     def render_communities(self, communities: list,
@@ -138,4 +160,7 @@ class Visualizer:
         Returns:
             str: đường dẫn file HTML
         """
+        if has_pyvis is False:
+            print("Chưa tải module pyvis")
+            return
         pass
