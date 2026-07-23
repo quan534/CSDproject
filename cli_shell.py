@@ -92,7 +92,7 @@ class CLIShell:
         print("============================")
         self._running=True
         try:
-            self._dm.import_json("data")
+            self._dm.import_json("data.json")
         except:
             pass
         while self._running:
@@ -367,7 +367,7 @@ class CLIShell:
             export_type=command_parsed[2].lower()
             if export_type == "json":
                 if len(command_parsed) == 3:
-                    print("Exported" if self._dm.export_json("data") else "Failed to export")
+                    print("Exported" if self._dm.export_json("data.json") else "Failed to export")
                 elif len(command_parsed) != 4:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath=data.json>" ')
                 else:
