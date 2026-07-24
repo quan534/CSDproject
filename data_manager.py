@@ -60,38 +60,50 @@ class DataManager:
         try:
             with open(filepath,"r",encoding="utf-8") as f:
                 data=json.load(f)
-            users_loaded=0
-            friendships_loaded=0
-            self._um._users.clear()
-            self._um._id_map.clear()
-            self._um._graph = SocialGraph()
-            self._um._avl_name = AVLTree()
-            max_id=0
-            for info in data.get("users",[]):
-                user=User.from_dict(info)
-                self._um._users.append(user)
-                self._um._id_map[user.user_id]=user
-                self._um._avl_name.insert(user)
-                self._um._graph.add_node(user.user_id)
-                users_loaded+=1
+            new_users = []
+            new_id_map = {}
+            max_id = 0
+            for info in data.get("users", []):
+                user = User.from_dict(info)
+                if user.user_id in new_id_map:
+                    continue 
+                new_users.append(user)
+                new_id_map[user.user_id] = user
                 try:
-                    number=int(user.user_id[1:])
-                    if number>max_id:
-                        max_id=number
+                    number = int(user.user_id[1:])
+                    if number > max_id:
+                        max_id = number
                 except ValueError:
                     pass
-            self._um._next_id=max_id+1
-            for edge in data.get("friendships",[]):
-                if len(edge)!=2:
+
+            new_graph = SocialGraph()
+            for user in new_users:
+                new_graph.add_node(user.user_id)
+
+            friendships_loaded = 0
+            for edge in data.get("friendships", []):
+                if len(edge) != 2:
                     continue
-                id1,id2=edge
-                if id1 in self._um._id_map and id2 in self._um._id_map:
-                    if not self._um._graph.are_friends(id1,id2):
-                        self._um._graph.add_edge(id1,id2)
-                        friendships_loaded+=1
+                id1, id2 = edge
+                if id1 == id2:
+                    continue
+                if id1 in new_id_map and id2 in new_id_map:
+                    if not new_graph.are_friends(id1, id2):
+                        new_graph.add_edge(id1, id2)
+                        friendships_loaded += 1
+
+            new_avl = AVLTree()
+            for user in new_users:
+                new_avl.insert(user)
+            self._um._users = new_users
+            self._um._id_map = new_id_map
+            self._um._graph = new_graph
+            self._um._avl_name = new_avl
+            self._um._next_id = max_id + 1
+
             return {
-                "users_loaded":users_loaded,
-                "friendships_loaded":friendships_loaded
+                "users_loaded": len(new_users),
+                "friendships_loaded": friendships_loaded
             }
         except Exception as e:
             print("Import JSON Error:",e)
@@ -144,12 +156,8 @@ class DataManager:
                    users_filepath: str,
                    edges_filepath: str) -> dict:
         try:
-            users_loaded = 0
-            friendships_loaded = 0
-            self._um._users.clear()
-            self._um._id_map.clear()
-            self._um._graph = SocialGraph()
-            self._um._avl_name = AVLTree()
+            new_users = []
+            new_id_map = {}
             max_id = 0
             with open(users_filepath,
                       "r",
@@ -166,18 +174,22 @@ class DataManager:
                         row["location"],
                         interests
                     )
-                    self._um._users.append(user)
-                    self._um._id_map[user.user_id] = user
-                    self._um._avl_name.insert(user)
-                    self._um._graph.add_node(user.user_id)
-                    users_loaded += 1
+                    if user.user_id in new_id_map:
+                        continue  # bỏ qua id trùng lặp trong file
+                    new_users.append(user)
+                    new_id_map[user.user_id] = user
                     try:
                         number = int(user.user_id[1:])
                         if number > max_id:
                             max_id = number
                     except ValueError:
                         pass
-            self._um._next_id = max_id + 1
+
+            new_graph = SocialGraph()
+            for user in new_users:
+                new_graph.add_node(user.user_id)
+
+            friendships_loaded = 0
             with open(edges_filepath,
                       "r",
                       encoding="utf-8") as f:
@@ -185,15 +197,28 @@ class DataManager:
                 for row in reader:
                     id1 = row["user_id1"]
                     id2 = row["user_id2"]
-                    if id1 not in self._um._id_map:
+                    if id1 == id2:
                         continue
-                    if id2 not in self._um._id_map:
+                    if id1 not in new_id_map:
                         continue
-                    if not self._um._graph.are_friends(id1, id2):
-                        self._um._graph.add_edge(id1, id2)
+                    if id2 not in new_id_map:
+                        continue
+                    if not new_graph.are_friends(id1, id2):
+                        new_graph.add_edge(id1, id2)
                         friendships_loaded += 1
+
+            new_avl = AVLTree()
+            for user in new_users:
+                new_avl.insert(user)
+
+            self._um._users = new_users
+            self._um._id_map = new_id_map
+            self._um._graph = new_graph
+            self._um._avl_name = new_avl
+            self._um._next_id = max_id + 1
+
             return {
-                "users_loaded": users_loaded,
+                "users_loaded": len(new_users),
                 "friendships_loaded": friendships_loaded
             }
         except Exception as e:
@@ -291,3 +316,4 @@ class DataManager:
             "total_users": len(self._um.get_all_users()),
             "total_friendships": len(graph.get_all_edges())
         }
+
