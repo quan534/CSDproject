@@ -56,7 +56,7 @@ class CLIShell:
       data export csv  <users_path> <edges_path>
       data import json <filepath>
       data import csv  <users_path> <edges_path>
-      data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]
+      data generate    [num_users] [avg_friends=N]
 
     ─── VISUALIZE ─────────────────────────────────────
       viz network  [output_path]
@@ -169,7 +169,7 @@ class CLIShell:
             interest=command_parsed[5].split(",")
             self._um.add_user(name,age,location,interest)
         elif sub_command == "graph_list" :
-            print(self._um.get_graph().find_connected_components())
+            self._print_graph_components(self._um.get_graph().find_connected_components())
         elif sub_command == "remove" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "user remove <id>" ')
@@ -230,47 +230,54 @@ class CLIShell:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend request <from_id> <to_id>" ')
             from_id=command_parsed[2].upper()
             to_id=command_parsed[3].upper()
-            print(self._um.send_friend_request(from_id,to_id))
+            status = self._um.send_friend_request(from_id,to_id)
+            messages = {
+                "sent"            : f"Đã gửi lời mời kết bạn từ {from_id} đến {to_id}.",
+                "already_friends" : f"{from_id} và {to_id} đã là bạn bè.",
+                "blocked"         : "Không thể gửi lời mời vì một trong hai người đã chặn người kia.",
+                "already_pending" : "Lời mời kết bạn đã được gửi trước đó, đang chờ phản hồi.",
+            }
+            print(messages.get(status, status))
         elif sub_command == "cancel":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend cancel <from_id> <to_id>" ')
             from_id=command_parsed[2].upper()
             to_id=command_parsed[3].upper()
-            print("Cancelled" if self._um.cancel_friend_request(from_id,to_id)  else "No request")
+            print("Đã hủy lời mời kết bạn." if self._um.cancel_friend_request(from_id,to_id) else "Không tìm thấy lời mời nào.")
         elif sub_command == "accept":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend accept <user_id> <from_id>" ')
             user_id=command_parsed[2].upper()
             from_id=command_parsed[3].upper()
-            print("Accepted" if self._um.accept_friend_request(user_id,from_id) else "No request")
+            print("Đã chấp nhận lời mời kết bạn." if self._um.accept_friend_request(user_id,from_id) else "Không tìm thấy lời mời nào.")
         elif sub_command == "decline":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend decline <user_id> <from_id>" ')
             user_id=command_parsed[2].upper()
             from_id=command_parsed[3].upper()
-            print("Declined" if self._um.decline_friend_request(user_id,from_id) else "No request")
+            print("Đã từ chối lời mời kết bạn." if self._um.decline_friend_request(user_id,from_id) else "Không tìm thấy lời mời nào.")
         elif sub_command == "remove" :
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend remove <id1> <id2>" ')
             id1=command_parsed[2].upper()
             id2=command_parsed[3].upper()
-            print("Declined" if self._um.unfriend(id1,id2) else "No relation")
+            print("Đã hủy kết bạn." if self._um.unfriend(id1,id2) else "Hai người này chưa phải bạn bè.")
         elif sub_command == "list" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend list <user_id>" ')
             user_id=command_parsed[2].upper()
-            print(self._um.get_graph().get_friends(user_id))
+            self._print_id_list(self._um.get_graph().get_friends(user_id), f"Bạn bè của {user_id}")
         elif sub_command == "pending" :
             if len(command_parsed) != 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend pending <user_id>" ')
             user_id=command_parsed[2].upper()
-            print(self._um.get_pending_requests(user_id))
+            self._print_pending_requests(self._um.get_pending_requests(user_id), user_id)
         elif sub_command == "mutual" :
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "friend mutual <id1> <id2>" ')
             id1=command_parsed[2].upper()
             id2=command_parsed[3].upper()
-            print(self._um.get_mutual_friends(id1,id2))
+            self._print_id_list(self._um.get_mutual_friends(id1,id2), f"Bạn chung giữa {id1} và {id2}")
 
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
@@ -358,12 +365,10 @@ class CLIShell:
             sub_command = command_parsed[1].lower()
         if sub_command == "generate":
             if len(command_parsed) < 2:
-                raise Exception('''Sai cú pháp. Cú pháp đúng: "data generate [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]"
-                                VD: data generate 60 avg_friends=3 communities=5 inter=0.02''')
+                raise Exception('''Sai cú pháp. Cú pháp đúng: "data generate [num_users] [avg_friends=N]"
+                                VD: data generate 60 avg_friends=3''')
             num_users = 50
             avg_friends = 5
-            num_communities = 1
-            inter_community_ratio = 0.0
             rest = command_parsed[2:]
             if rest and "=" not in rest[0]:
                 num_users = int(rest[0])
@@ -375,18 +380,9 @@ class CLIShell:
                 field = field.lower()
                 if field == "avg_friends":
                     avg_friends = int(value)
-                elif field == "communities":
-                    num_communities = int(value)
-                elif field == "inter":
-                    inter_community_ratio = float(value)
                 else:
-                    raise Exception(f'Tham số "{field}" không hợp lệ. Dùng avg_friends/communities/inter')
-            print(self._dm.generate_sample_data(
-                num_users,
-                avg_friends,
-                num_communities=num_communities,
-                inter_community_ratio=inter_community_ratio
-            ))
+                    raise Exception(f'Tham số "{field}" không hợp lệ. Dùng avg_friends')
+            self._print_generate_result(self._dm.generate_sample_data(num_users, avg_friends))
         elif sub_command == "export":
             if len(command_parsed) < 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath=data.json>" hoặc "data export csv <users_path> <edges_path>" ')
@@ -401,7 +397,8 @@ class CLIShell:
             elif export_type == "csv":
                 if len(command_parsed) != 5:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data export csv <users_path> <edges_path>" ')
-                print(self._dm.export_csv(command_parsed[3], command_parsed[4]))
+                ok = self._dm.export_csv(command_parsed[3], command_parsed[4])
+                print("Exported" if ok else "Failed to export")
             else:
                 raise Exception(f'data export không hỗ trợ định dạng "{export_type}"')
         elif sub_command == "import":
@@ -411,11 +408,11 @@ class CLIShell:
             if import_type == "json":
                 if len(command_parsed) != 4:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data import json <filepath>" ')
-                print(self._dm.import_json(command_parsed[3]))
+                self._print_import_result(self._dm.import_json(command_parsed[3]), "Nhập JSON")
             elif import_type == "csv":
                 if len(command_parsed) != 5:
                     raise Exception('Sai cú pháp. Cú pháp đúng: "data import csv <users_path> <edges_path>" ')
-                print(self._dm.import_csv(command_parsed[3], command_parsed[4]))
+                self._print_import_result(self._dm.import_csv(command_parsed[3], command_parsed[4]), "Nhập CSV")
             else:
                 raise Exception(f'data import không hỗ trợ định dạng "{import_type}"')
         else:
@@ -433,18 +430,18 @@ class CLIShell:
 
             if len(command_parsed) == 3:
                 output=command_parsed[2]
-                print(self._viz.render_full_network(output))
+                self._print_viz_result(self._viz.render_full_network(output))
             else:
-                print(self._viz.render_full_network())
+                self._print_viz_result(self._viz.render_full_network())
 
         elif sub_command == "ego":
             if len(command_parsed) not in [3,4]:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "viz ego <user_id> [output_path]" ')
             user_id=command_parsed[2].upper()
             if len(command_parsed) == 4:
-                print(self._viz.render_ego_network(user_id, command_parsed[3]))
+                self._print_viz_result(self._viz.render_ego_network(user_id, command_parsed[3]))
             else:
-                print(self._viz.render_ego_network(user_id))
+                self._print_viz_result(self._viz.render_ego_network(user_id))
 
         elif sub_command == "path":
             if len(command_parsed) != 4:
@@ -455,13 +452,13 @@ class CLIShell:
             if not result["path"]:
                 print(f"Không có đường đi giữa {id1} và {id2} để vẽ.")
             else:
-                print(self._viz.render_path(result["path"]))
+                self._print_viz_result(self._viz.render_path(result["path"]))
 
         elif sub_command == "community":
             if len(command_parsed) != 2:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "viz community" ')
             communities = self._ana.detect_communities()
-            print(self._viz.render_communities(communities))
+            self._print_viz_result(self._viz.render_communities(communities))
 
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
@@ -476,9 +473,11 @@ class CLIShell:
         user_id   = command_parsed[1].upper()
         target_id = command_parsed[2].upper()
         if action == "block":
-            print(self._um.block_user(user_id, target_id))
+            ok = self._um.block_user(user_id, target_id)
+            print(f"Đã chặn {target_id}." if ok else f"{target_id} đã bị chặn từ trước.")
         else:
-            print(self._um.unblock_user(user_id, target_id))
+            ok = self._um.unblock_user(user_id, target_id)
+            print(f"Đã bỏ chặn {target_id}." if ok else f"{target_id} chưa từng bị chặn.")
 
     def _handle_misc(self, command_parsed: list) -> None:
         """Xử lý nhóm lệnh khác"""
@@ -547,7 +546,7 @@ class CLIShell:
     data export csv  <users_path> <edges_path>
     data import json <filepath>
     data import csv  <users_path> <edges_path>
-    data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]     
+    data generate    [num_users] [avg_friends=N]     
 """)
             elif help_category == "visualize":
                 print("""
@@ -609,7 +608,7 @@ class CLIShell:
     data export csv  <users_path> <edges_path>
     data import json <filepath>
     data import csv  <users_path> <edges_path>
-    data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]
+    data generate    [num_users] [avg_friends=N]
 
 ─── VISUALIZE ─────────────────────────────────────
     viz network  [output_path]
@@ -720,6 +719,58 @@ class CLIShell:
         print(f"  Sở thích chung : {common}")
         print(f"  Chỉ {id1} có   : {only1}")
         print(f"  Chỉ {id2} có   : {only2}")
+
+    def _format_id_set(self, ids) -> str:
+        """Chuyển 1 tập/list user_id thô thành chuỗi 'Tên(ID), Tên(ID)' dễ đọc,
+        thay vì in ra set() thô kiểu {'U001', 'U002'}."""
+        if not ids:
+            return "không có"
+        parts = []
+        for uid in sorted(ids):
+            user = self._um.get_user(uid)
+            parts.append(f"{user.name}({uid})" if user else uid)
+        return ", ".join(parts)
+
+    def _print_id_list(self, ids, title: str) -> None:
+        print(f"{title}: {self._format_id_set(ids)}")
+
+    def _print_pending_requests(self, requests: list, user_id: str) -> None:
+        """In danh sách lời mời kết bạn đang chờ dạng bảng, thay vì list[FriendRequest] thô."""
+        if not requests:
+            print(f"{user_id} không có lời mời kết bạn nào đang chờ.")
+            return
+        rows = []
+        for req in requests:
+            from_user = self._um.get_user(req.from_id)
+            from_name = from_user.name if from_user else req.from_id
+            rows.append([req.from_id, from_name, req.status.value])
+        self._print_table(["Từ ID", "Tên", "Trạng thái"], rows)
+
+    def _print_graph_components(self, components: list) -> None:
+        """In danh sách connected components (lệnh 'user graph_list') dạng bảng dễ đọc."""
+        if not components:
+            print("Không có dữ liệu.")
+            return
+        rows = []
+        for i, comp in enumerate(components, start=1):
+            names = self._format_id_set(comp)
+            rows.append([i, len(comp), names])
+        self._print_table(["Nhóm", "Kích thước", "Thành viên"], rows)
+
+    def _print_import_result(self, result: dict, label: str = "Nhập dữ liệu") -> None:
+        print(f"{label} thành công: {result['users_loaded']} user, "
+              f"{result['friendships_loaded']} lượt kết bạn.")
+
+    def _print_generate_result(self, result: dict) -> None:
+        print(f"Đã tạo {result['users_created']} user, "
+              f"{result['friendships_created']} lượt kết bạn "
+              f"(mất {result['execution_time_ms']} ms).")
+
+    def _print_viz_result(self, output_path) -> None:
+        """In kết quả lệnh viz. Các hàm render_* trả về None khi thiếu pyvis
+        (và tự in cảnh báo bên trong rồi) -> ở đây không được print(None) đè lên."""
+        if output_path:
+            print(f"Đã tạo file: {output_path}")
 
     def _print_suggestion(self, result: SuggestionResult) -> None:
         """
