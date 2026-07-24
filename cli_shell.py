@@ -56,7 +56,7 @@ class CLIShell:
       data export csv  <users_path> <edges_path>
       data import json <filepath>
       data import csv  <users_path> <edges_path>
-      data generate    [num_users]
+      data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]
 
     ─── VISUALIZE ─────────────────────────────────────
       viz network  [output_path]
@@ -327,26 +327,26 @@ class CLIShell:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "analytics path <id1> <id2>" ')
             id1=command_parsed[2].upper()
             id2=command_parsed[3].upper()
-            print(self._ana.shortest_path(id1,id2))
+            self._print_path(self._ana.shortest_path(id1,id2), id1, id2)
         elif sub_command == "influencer":
             if len(command_parsed) not in [2,3]:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "analytics influencer [top_n]" ')
             top_n = int(command_parsed[2]) if len(command_parsed)==3 else 5
-            print(self._ana.top_influencers(top_n))
+            self._print_influencers(self._ana.top_influencers(top_n))
         elif sub_command == "community":
             if len(command_parsed) != 2:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "analytics community" ')
-            print(self._ana.detect_communities())
+            self._print_communities(self._ana.detect_communities())
         elif sub_command == "stats":
             if len(command_parsed) != 2:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "analytics stats" ')
-            print(self._ana.network_stats())
+            self._print_network_stats(self._ana.network_stats())
         elif sub_command == "similarity":
             if len(command_parsed) != 4:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "analytics similarity <id1> <id2>" ')
             id1=command_parsed[2].upper()
             id2=command_parsed[3].upper()
-            print(self._ana.common_interest_score(id1,id2))
+            self._print_similarity(self._ana.common_interest_score(id1,id2), id1, id2)
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
 
@@ -357,10 +357,36 @@ class CLIShell:
         else:
             sub_command = command_parsed[1].lower()
         if sub_command == "generate":
-            if len(command_parsed) not in [2,3]:
-                raise Exception('Sai cú pháp. Cú pháp đúng: "data generate [num_users]" ')
-            num_users = int(command_parsed[2]) if len(command_parsed)==3 else 50
-            print(self._dm.generate_sample_data(num_users))
+            if len(command_parsed) < 2:
+                raise Exception('''Sai cú pháp. Cú pháp đúng: "data generate [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]"
+                                VD: data generate 60 avg_friends=3 communities=5 inter=0.02''')
+            num_users = 50
+            avg_friends = 5
+            num_communities = 1
+            inter_community_ratio = 0.0
+            rest = command_parsed[2:]
+            if rest and "=" not in rest[0]:
+                num_users = int(rest[0])
+                rest = rest[1:]
+            for pair in rest:
+                if "=" not in pair:
+                    raise Exception(f'Sai cú pháp ở "{pair}". Mỗi tham số phải có dạng field=value')
+                field, value = pair.split("=", 1)
+                field = field.lower()
+                if field == "avg_friends":
+                    avg_friends = int(value)
+                elif field == "communities":
+                    num_communities = int(value)
+                elif field == "inter":
+                    inter_community_ratio = float(value)
+                else:
+                    raise Exception(f'Tham số "{field}" không hợp lệ. Dùng avg_friends/communities/inter')
+            print(self._dm.generate_sample_data(
+                num_users,
+                avg_friends,
+                num_communities=num_communities,
+                inter_community_ratio=inter_community_ratio
+            ))
         elif sub_command == "export":
             if len(command_parsed) < 3:
                 raise Exception('Sai cú pháp. Cú pháp đúng: "data export json <filepath=data.json>" hoặc "data export csv <users_path> <edges_path>" ')
@@ -410,6 +436,32 @@ class CLIShell:
                 print(self._viz.render_full_network(output))
             else:
                 print(self._viz.render_full_network())
+
+        elif sub_command == "ego":
+            if len(command_parsed) not in [3,4]:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "viz ego <user_id> [output_path]" ')
+            user_id=command_parsed[2].upper()
+            if len(command_parsed) == 4:
+                print(self._viz.render_ego_network(user_id, command_parsed[3]))
+            else:
+                print(self._viz.render_ego_network(user_id))
+
+        elif sub_command == "path":
+            if len(command_parsed) != 4:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "viz path <id1> <id2>" ')
+            id1=command_parsed[2].upper()
+            id2=command_parsed[3].upper()
+            result = self._ana.shortest_path(id1, id2)
+            if not result["path"]:
+                print(f"Không có đường đi giữa {id1} và {id2} để vẽ.")
+            else:
+                print(self._viz.render_path(result["path"]))
+
+        elif sub_command == "community":
+            if len(command_parsed) != 2:
+                raise Exception('Sai cú pháp. Cú pháp đúng: "viz community" ')
+            communities = self._ana.detect_communities()
+            print(self._viz.render_communities(communities))
 
         else:
             raise Exception(f'Nhóm lệnh {command_parsed[0]} không có subcommand {command_parsed[1]}')
@@ -495,7 +547,7 @@ class CLIShell:
     data export csv  <users_path> <edges_path>
     data import json <filepath>
     data import csv  <users_path> <edges_path>
-    data generate    [num_users]                    
+    data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]     
 """)
             elif help_category == "visualize":
                 print("""
@@ -557,7 +609,7 @@ class CLIShell:
     data export csv  <users_path> <edges_path>
     data import json <filepath>
     data import csv  <users_path> <edges_path>
-    data generate    [num_users]
+    data generate    [num_users] [avg_friends=N] [communities=N] [inter=0.0-1.0]
 
 ─── VISUALIZE ─────────────────────────────────────
     viz network  [output_path]
@@ -606,6 +658,68 @@ class CLIShell:
         print(separator)
         for row in str_rows:
             print(format_row(row))
+
+    def _print_path(self, result: dict, id1: str, id2: str) -> None:
+        """In kết quả 'analytics path' dạng chuỗi liên kết dễ đọc."""
+        if not result["path"]:
+            print(f"Không tìm thấy đường kết nối giữa {id1} và {id2}.")
+            return
+        chain = " → ".join(
+            f"{uid}({name})" for uid, name in zip(result["path"], result["path_names"])
+        )
+        print(f"Đường đi ngắn nhất ({result['degree']} bậc ngăn cách):")
+        print(f"  {chain}")
+
+    def _print_influencers(self, results: list) -> None:
+        """In danh sách 'analytics influencer' dạng bảng."""
+        if not results:
+            print("Không có dữ liệu người dùng.")
+            return
+        rows = [
+            [i + 1, r["user"].user_id, r["user"].name, r["friend_count"]]
+            for i, r in enumerate(results)
+        ]
+        self._print_table(["#", "ID", "Tên", "Số bạn"], rows)
+
+    def _print_communities(self, communities: list) -> None:
+        """In danh sách 'analytics community' dạng bảng."""
+        if not communities:
+            print("Không có cộng đồng nào.")
+            return
+        rows = []
+        for c in communities:
+            members_str = ", ".join(f"{m.name}({m.user_id})" for m in c["members"])
+            rows.append([c["community_id"], c["size"], members_str])
+        self._print_table(["Cộng đồng", "Kích thước", "Thành viên"], rows)
+
+    def _print_network_stats(self, stats: dict) -> None:
+        """In 'analytics stats' dạng bảng, làm tròn số thập phân cho dễ đọc."""
+        labels = {
+            "total_users"      : "Tổng số user",
+            "total_friendships": "Tổng số kết bạn",
+            "avg_friends"      : "Bạn bè trung bình",
+            "density"          : "Mật độ mạng lưới",
+            "num_communities"  : "Số cộng đồng",
+            "largest_community": "Cộng đồng lớn nhất",
+            "isolated_users"   : "User không có bạn",
+        }
+        rows = []
+        for key, label in labels.items():
+            value = stats.get(key)
+            if isinstance(value, float):
+                value = round(value, 4)
+            rows.append([label, value])
+        self._print_table(["Chỉ số", "Giá trị"], rows)
+
+    def _print_similarity(self, result: dict, id1: str, id2: str) -> None:
+        """In 'analytics similarity' dễ đọc."""
+        common     = ", ".join(result["common"])     if result["common"]     else "không có"
+        only1      = ", ".join(result["user1_only"])  if result["user1_only"]  else "không có"
+        only2      = ", ".join(result["user2_only"])  if result["user2_only"]  else "không có"
+        print(f"Độ tương đồng (Jaccard) giữa {id1} và {id2}: {result['score']:.2f}")
+        print(f"  Sở thích chung : {common}")
+        print(f"  Chỉ {id1} có   : {only1}")
+        print(f"  Chỉ {id2} có   : {only2}")
 
     def _print_suggestion(self, result: SuggestionResult) -> None:
         """
