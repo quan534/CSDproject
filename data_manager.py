@@ -3,6 +3,7 @@ import csv
 import random
 import time
 from datetime import datetime
+from collections import defaultdict
 from social_graph import SocialGraph 
 from avl_tree import AVLTree
 from models       import User
@@ -66,6 +67,9 @@ class DataManager:
             self._um._id_map.clear()
             self._um._graph = SocialGraph()
             self._um._avl_name = AVLTree()
+            self._um._pending = defaultdict(set)
+            self._um._blocked = defaultdict(set)
+            
             max_id=0
             for info in data.get("users",[]):
                 user=User.from_dict(info)
@@ -150,6 +154,8 @@ class DataManager:
             self._um._id_map.clear()
             self._um._graph = SocialGraph()
             self._um._avl_name = AVLTree()
+            self._um._pending = defaultdict(set)
+            self._um._blocked = defaultdict(set)
             max_id = 0
             with open(users_filepath,
                       "r",
@@ -284,6 +290,8 @@ class DataManager:
         self._um._id_map.clear()
         self._um._graph = SocialGraph()
         self._um._avl_name = AVLTree()
+        self._um._pending = defaultdict(set)
+        self._um._blocked = defaultdict(set)
         self._um._next_id = 1
     def statistics(self):
         graph = self._um.get_graph()
