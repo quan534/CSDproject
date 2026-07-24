@@ -16,7 +16,9 @@ class NetworkAnalytics:
 
     def __init__(self, user_manager: UserManager):
         self._um    = user_manager
-        self._graph = user_manager.get_graph()
+    @property
+    def _graph(self):
+        return self._um.get_graph()
 
     def shortest_path(self, from_id: str, to_id: str) -> dict:
         """
