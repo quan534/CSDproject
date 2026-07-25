@@ -1,5 +1,5 @@
 from models       import User, FriendRequest, RequestStatus
-from avl_tree     import AVLTree
+from avl_tree    import AVLTree
 from social_graph import SocialGraph
 from typing import Optional
 from datetime import datetime
