@@ -1,6 +1,29 @@
 import unicodedata
 from models import User
 
+def _normalize_name(name: str) -> str:
+    """Chuẩn hóa tiếng Việt (NFC), xóa khoảng trắng thừa và đưa về chữ thường."""
+    if not name:
+        return ""
+    return unicodedata.normalize('NFC', name).strip().lower()
+
+def _get_sort_key_name_first(user: User):
+    """
+    Tạo Key sắp xếp ưu tiên:
+    1. Tên chính (từ cuối cùng)
+    2. Họ và tên lót (các từ phía trước)
+    3. ID người dùng (để đảm bảo tính duy nhất và ổn định)
+    """
+    normalized = _normalize_name(user.name)
+    parts = normalized.split()
+    
+    if not parts:
+        return ("", "", str(user.user_id))
+    
+    first_name = parts[-1]                      # Tên chính (VD: "an", "bình")
+    middle_and_last = " ".join(parts[:-1])        # Họ và tên lót (VD: "nguyễn văn")
+    
+    return (first_name, middle_and_last, str(user.user_id))
 
 def extract_last_name(full_name: str) -> str:
     """ Trích xuất từ cuối cùng của họ tên và chuẩn hóa chữ thường """
@@ -10,8 +33,6 @@ def extract_last_name(full_name: str) -> str:
     clean_name = unicodedata.normalize('NFC', full_name).strip().lower()
     words = clean_name.split()
     return words[-1] if words else ""
-
-
 
 class AVLNode:
     def __init__(self, user: User):
@@ -105,6 +126,7 @@ class AVLTree:
         else:
             # Gặp người trùng tên chính: Chỉ thêm đối tượng vào mảng có sẵn
             node.users.append(user)
+            node.users.sort(key=_get_sort_key_name_first)
             return node
 
         return self._balance_node(node)
@@ -184,30 +206,9 @@ class AVLTree:
 
         return self._balance_node(node)
 
-    
     def inorder(self) -> list:
         result = []
-        # Bước 1: Duyệt cây lấy dữ liệu thô
         self._inorder_recursive(self.root, result)
-        
-        # Bước 2: Định nghĩa hàm tạo key sắp xếp ưu tiên TÊN trước, HỌ VÀ TÊN LÓT sau
-        def get_sort_key(user):
-            # Lấy chuỗi họ tên từ đối tượng user (đổi .name thành .full_name nếu class User dùng tên đó)
-            full_name = user.name.strip()
-            parts = full_name.split()
-            
-            if not parts:
-                return ("", "")
-            
-            first_name = parts[-1]               # Tên chính (từ cuối cùng: An, Bình,...)
-            middle_and_last = " ".join(parts[:-1]) # Họ và tên lót (Hoàng Văn, Lê Ngọc,...)
-            
-            # Python sẽ so sánh first_name trước; nếu trùng nhau mới so sánh middle_and_last
-            return (first_name, middle_and_last)
-
-        # Bước 3: Sắp xếp lại toàn bộ mảng kết quả cuối cùng
-        result.sort(key=get_sort_key)
-        
         return result
 
     def _inorder_recursive(self, node, result):
