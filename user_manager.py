@@ -63,14 +63,15 @@ class UserManager:
 
 
     def update_user(self, user_id: str, **kwargs) -> bool:
+
         """
         Cập nhật thông tin người dùng. Nếu cập nhật name thì rebuild AVL node.
-
         Args:
             user_id (str) : ID người cần cập nhật
-            **kwargs      : Các field cần thay đổi (name, age, location, interests)
-                            VD: update_user("U001", age=26, location="HCM")
 
+            **kwargs      : Các field cần thay đổi (name, age, location, interests)
+
+                            VD: update_user("U001", age=26, location="HCM")
         Returns:
             bool: True nếu thành công
         """
@@ -92,7 +93,6 @@ class UserManager:
                 user.name, user.user_id,
                 new_name=new_name, new_age=new_age
             )
-
         return True
 
 

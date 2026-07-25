@@ -6,9 +6,7 @@
             "age": 33,
             "location": "HN",
             "interests": [
-                "travel",
-                "cooking",
-                "art"
+                "gaming"
             ]
         },
         {
@@ -559,17 +557,582 @@
                 "travel",
                 "music"
             ]
+        },
+        {
+            "user_id": "U054",
+            "name": "Trần Văn Ivy",
+            "age": 33,
+            "location": "HN",
+            "interests": [
+                "travel",
+                "cooking",
+                "art"
+            ]
+        },
+        {
+            "user_id": "U055",
+            "name": "Hoàng Văn An",
+            "age": 23,
+            "location": "HN",
+            "interests": [
+                "cooking",
+                "music",
+                "coding"
+            ]
+        },
+        {
+            "user_id": "U056",
+            "name": "Hoàng Thị Quang",
+            "age": 55,
+            "location": "Đà Nẵng",
+            "interests": [
+                "gaming",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U057",
+            "name": "Phan Minh Em",
+            "age": 31,
+            "location": "Bình Dương",
+            "interests": [
+                "travel",
+                "art",
+                "reading",
+                "music"
+            ]
+        },
+        {
+            "user_id": "U058",
+            "name": "Phan Gia Minh",
+            "age": 56,
+            "location": "Đà Nẵng",
+            "interests": [
+                "photography",
+                "cooking"
+            ]
+        },
+        {
+            "user_id": "U059",
+            "name": "Trần Ngọc Chi",
+            "age": 53,
+            "location": "Đà Nẵng",
+            "interests": [
+                "art",
+                "coding",
+                "travel",
+                "music"
+            ]
+        },
+        {
+            "user_id": "U060",
+            "name": "Phạm Gia Khánh",
+            "age": 23,
+            "location": "Bình Dương",
+            "interests": [
+                "travel",
+                "reading",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U061",
+            "name": "Võ Anh Minh",
+            "age": 28,
+            "location": "Đà Nẵng",
+            "interests": [
+                "coding",
+                "movies",
+                "travel",
+                "cooking"
+            ]
+        },
+        {
+            "user_id": "U062",
+            "name": "Lê Đăng Hà",
+            "age": 28,
+            "location": "Huế",
+            "interests": [
+                "movies",
+                "cooking",
+                "coding",
+                "sports",
+                "gaming"
+            ]
+        },
+        {
+            "user_id": "U063",
+            "name": "Nguyễn Thị Bình",
+            "age": 38,
+            "location": "Huế",
+            "interests": [
+                "travel",
+                "coding",
+                "sports",
+                "art"
+            ]
+        },
+        {
+            "user_id": "U064",
+            "name": "Võ Ngọc Quang",
+            "age": 27,
+            "location": "Đà Nẵng",
+            "interests": [
+                "coding",
+                "cooking",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U065",
+            "name": "Hoàng Đăng Nam",
+            "age": 41,
+            "location": "HN",
+            "interests": [
+                "cooking",
+                "photography",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U066",
+            "name": "Nguyễn Gia Duy",
+            "age": 27,
+            "location": "Hải Phòng",
+            "interests": [
+                "reading",
+                "travel",
+                "art"
+            ]
+        },
+        {
+            "user_id": "U067",
+            "name": "Hoàng Đăng Quang",
+            "age": 51,
+            "location": "Đà Nẵng",
+            "interests": [
+                "travel",
+                "cooking"
+            ]
+        },
+        {
+            "user_id": "U068",
+            "name": "Huỳnh Gia Lan",
+            "age": 25,
+            "location": "Đà Nẵng",
+            "interests": [
+                "gaming",
+                "photography",
+                "music",
+                "sports",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U069",
+            "name": "Huỳnh Đăng Phong",
+            "age": 50,
+            "location": "HCM",
+            "interests": [
+                "cooking",
+                "coding",
+                "gaming",
+                "photography"
+            ]
+        },
+        {
+            "user_id": "U070",
+            "name": "Lê Đăng Trang",
+            "age": 18,
+            "location": "Cần Thơ",
+            "interests": [
+                "photography",
+                "music",
+                "travel",
+                "gaming"
+            ]
+        },
+        {
+            "user_id": "U071",
+            "name": "Huỳnh Thị Bình",
+            "age": 33,
+            "location": "Cần Thơ",
+            "interests": [
+                "travel",
+                "photography"
+            ]
+        },
+        {
+            "user_id": "U072",
+            "name": "Trần Gia Tuấn",
+            "age": 26,
+            "location": "HN",
+            "interests": [
+                "cooking",
+                "gaming",
+                "movies",
+                "photography",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U073",
+            "name": "Hoàng Thị Tuấn",
+            "age": 30,
+            "location": "Hải Phòng",
+            "interests": [
+                "reading",
+                "sports",
+                "photography",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U074",
+            "name": "Võ Văn Hà",
+            "age": 32,
+            "location": "HCM",
+            "interests": [
+                "music",
+                "cooking",
+                "coding",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U075",
+            "name": "Phạm Văn Chi",
+            "age": 58,
+            "location": "HCM",
+            "interests": [
+                "travel",
+                "music",
+                "sports"
+            ]
+        },
+        {
+            "user_id": "U076",
+            "name": "Trần Đăng Hà",
+            "age": 35,
+            "location": "Hải Phòng",
+            "interests": [
+                "coding",
+                "cooking",
+                "gaming",
+                "sports",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U077",
+            "name": "Võ Thị Sơn",
+            "age": 44,
+            "location": "HN",
+            "interests": [
+                "travel",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U078",
+            "name": "Phan Ngọc Oanh",
+            "age": 47,
+            "location": "Bình Dương",
+            "interests": [
+                "travel",
+                "music"
+            ]
+        },
+        {
+            "user_id": "U079",
+            "name": "Hoàng Anh Lan",
+            "age": 24,
+            "location": "HN",
+            "interests": [
+                "coding",
+                "cooking",
+                "photography"
+            ]
+        },
+        {
+            "user_id": "U080",
+            "name": "Lê Ngọc Phong",
+            "age": 35,
+            "location": "Huế",
+            "interests": [
+                "travel",
+                "photography",
+                "art"
+            ]
+        },
+        {
+            "user_id": "U081",
+            "name": "Nguyễn Anh Tuấn",
+            "age": 18,
+            "location": "HCM",
+            "interests": [
+                "gaming",
+                "reading",
+                "photography"
+            ]
+        },
+        {
+            "user_id": "U082",
+            "name": "Võ Thị Nam",
+            "age": 21,
+            "location": "HN",
+            "interests": [
+                "music",
+                "reading",
+                "movies",
+                "cooking",
+                "coding"
+            ]
+        },
+        {
+            "user_id": "U083",
+            "name": "Huỳnh Ngọc Tuấn",
+            "age": 60,
+            "location": "Hải Phòng",
+            "interests": [
+                "gaming",
+                "coding",
+                "movies",
+                "travel",
+                "music"
+            ]
+        },
+        {
+            "user_id": "U084",
+            "name": "Nguyễn Anh Lan",
+            "age": 21,
+            "location": "HCM",
+            "interests": [
+                "cooking",
+                "art",
+                "gaming",
+                "music",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U085",
+            "name": "Trần Gia Phong",
+            "age": 22,
+            "location": "Cần Thơ",
+            "interests": [
+                "coding",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U086",
+            "name": "Trần Đăng Hà",
+            "age": 55,
+            "location": "Cần Thơ",
+            "interests": [
+                "art",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U087",
+            "name": "Hoàng Anh Vy",
+            "age": 54,
+            "location": "Cần Thơ",
+            "interests": [
+                "movies",
+                "coding",
+                "sports",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U088",
+            "name": "Huỳnh Ngọc Em",
+            "age": 60,
+            "location": "Hải Phòng",
+            "interests": [
+                "photography",
+                "sports",
+                "travel",
+                "music"
+            ]
+        },
+        {
+            "user_id": "U089",
+            "name": "Võ Đăng Vy",
+            "age": 24,
+            "location": "HCM",
+            "interests": [
+                "cooking",
+                "movies",
+                "gaming"
+            ]
+        },
+        {
+            "user_id": "U090",
+            "name": "Phan Văn Hà",
+            "age": 41,
+            "location": "Đà Nẵng",
+            "interests": [
+                "photography",
+                "cooking",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U091",
+            "name": "Nguyễn Anh Tuấn",
+            "age": 37,
+            "location": "Hải Phòng",
+            "interests": [
+                "gaming",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U092",
+            "name": "Trần Văn Tuấn",
+            "age": 27,
+            "location": "Đà Nẵng",
+            "interests": [
+                "art",
+                "coding",
+                "sports",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U093",
+            "name": "Huỳnh Đăng Sơn",
+            "age": 34,
+            "location": "Bình Dương",
+            "interests": [
+                "travel",
+                "reading"
+            ]
+        },
+        {
+            "user_id": "U094",
+            "name": "Huỳnh Văn An",
+            "age": 39,
+            "location": "Bình Dương",
+            "interests": [
+                "movies",
+                "gaming",
+                "photography"
+            ]
+        },
+        {
+            "user_id": "U095",
+            "name": "Hoàng Đăng An",
+            "age": 25,
+            "location": "HCM",
+            "interests": [
+                "cooking",
+                "music",
+                "sports"
+            ]
+        },
+        {
+            "user_id": "U096",
+            "name": "Lê Ngọc Em",
+            "age": 20,
+            "location": "Đà Nẵng",
+            "interests": [
+                "music",
+                "sports",
+                "coding",
+                "cooking"
+            ]
+        },
+        {
+            "user_id": "U097",
+            "name": "Phạm Anh Duy",
+            "age": 40,
+            "location": "Bình Dương",
+            "interests": [
+                "art",
+                "gaming",
+                "coding",
+                "reading",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U098",
+            "name": "Lê Ngọc An",
+            "age": 29,
+            "location": "Hải Phòng",
+            "interests": [
+                "reading",
+                "coding",
+                "movies",
+                "travel"
+            ]
+        },
+        {
+            "user_id": "U099",
+            "name": "Trần Ngọc Bình",
+            "age": 48,
+            "location": "HN",
+            "interests": [
+                "photography",
+                "sports",
+                "movies"
+            ]
+        },
+        {
+            "user_id": "U100",
+            "name": "Phạm Thị An",
+            "age": 60,
+            "location": "HN",
+            "interests": [
+                "sports",
+                "movies",
+                "travel",
+                "reading",
+                "gaming"
+            ]
+        },
+        {
+            "user_id": "U101",
+            "name": "Phan Anh Trang",
+            "age": 43,
+            "location": "Hải Phòng",
+            "interests": [
+                "music",
+                "travel",
+                "movies",
+                "cooking"
+            ]
+        },
+        {
+            "user_id": "U102",
+            "name": "Huỳnh Văn Duy",
+            "age": 56,
+            "location": "Huế",
+            "interests": [
+                "sports",
+                "reading",
+                "travel",
+                "coding"
+            ]
+        },
+        {
+            "user_id": "U103",
+            "name": "Phạm Minh Bình",
+            "age": 45,
+            "location": "HCM",
+            "interests": [
+                "sports",
+                "reading",
+                "travel"
+            ]
         }
     ],
     "friendships": [
-        [
-            "U024",
-            "U041"
-        ],
-        [
-            "U024",
-            "U038"
-        ],
         [
             "U024",
             "U040"
@@ -579,6 +1142,34 @@
             "U034"
         ],
         [
+            "U024",
+            "U038"
+        ],
+        [
+            "U024",
+            "U041"
+        ],
+        [
+            "U025",
+            "U051"
+        ],
+        [
+            "U025",
+            "U042"
+        ],
+        [
+            "U025",
+            "U041"
+        ],
+        [
+            "U025",
+            "U028"
+        ],
+        [
+            "U025",
+            "U032"
+        ],
+        [
             "U025",
             "U040"
         ],
@@ -587,44 +1178,20 @@
             "U043"
         ],
         [
-            "U025",
-            "U028"
+            "U026",
+            "U029"
         ],
         [
-            "U025",
+            "U026",
+            "U053"
+        ],
+        [
+            "U026",
             "U051"
-        ],
-        [
-            "U025",
-            "U041"
-        ],
-        [
-            "U025",
-            "U032"
-        ],
-        [
-            "U025",
-            "U042"
         ],
         [
             "U026",
             "U052"
-        ],
-        [
-            "U026",
-            "U043"
-        ],
-        [
-            "U026",
-            "U051"
-        ],
-        [
-            "U026",
-            "U037"
-        ],
-        [
-            "U026",
-            "U029"
         ],
         [
             "U026",
@@ -636,23 +1203,19 @@
         ],
         [
             "U026",
-            "U053"
+            "U037"
+        ],
+        [
+            "U026",
+            "U043"
+        ],
+        [
+            "U027",
+            "U052"
         ],
         [
             "U027",
             "U047"
-        ],
-        [
-            "U027",
-            "U052"
-        ],
-        [
-            "U028",
-            "U048"
-        ],
-        [
-            "U028",
-            "U052"
         ],
         [
             "U028",
@@ -660,11 +1223,19 @@
         ],
         [
             "U028",
+            "U053"
+        ],
+        [
+            "U028",
+            "U052"
+        ],
+        [
+            "U028",
             "U041"
         ],
         [
             "U028",
-            "U037"
+            "U048"
         ],
         [
             "U028",
@@ -672,11 +1243,11 @@
         ],
         [
             "U028",
-            "U053"
+            "U037"
         ],
         [
             "U029",
-            "U033"
+            "U040"
         ],
         [
             "U029",
@@ -684,11 +1255,7 @@
         ],
         [
             "U029",
-            "U040"
-        ],
-        [
-            "U030",
-            "U041"
+            "U033"
         ],
         [
             "U030",
@@ -703,12 +1270,12 @@
             "U032"
         ],
         [
-            "U031",
-            "U036"
+            "U030",
+            "U041"
         ],
         [
             "U031",
-            "U035"
+            "U036"
         ],
         [
             "U031",
@@ -719,16 +1286,8 @@
             "U034"
         ],
         [
-            "U032",
-            "U036"
-        ],
-        [
-            "U032",
-            "U040"
-        ],
-        [
-            "U032",
-            "U039"
+            "U031",
+            "U035"
         ],
         [
             "U032",
@@ -739,12 +1298,16 @@
             "U033"
         ],
         [
-            "U033",
-            "U035"
+            "U032",
+            "U040"
         ],
         [
-            "U033",
-            "U043"
+            "U032",
+            "U036"
+        ],
+        [
+            "U032",
+            "U039"
         ],
         [
             "U033",
@@ -752,11 +1315,19 @@
         ],
         [
             "U033",
+            "U035"
+        ],
+        [
+            "U033",
             "U044"
         ],
         [
+            "U033",
+            "U043"
+        ],
+        [
             "U034",
-            "U038"
+            "U053"
         ],
         [
             "U034",
@@ -768,18 +1339,14 @@
         ],
         [
             "U034",
-            "U053"
-        ],
-        [
-            "U035",
-            "U050"
+            "U038"
         ],
         [
             "U035",
             "U052"
         ],
         [
-            "U037",
+            "U035",
             "U050"
         ],
         [
@@ -787,12 +1354,16 @@
             "U046"
         ],
         [
-            "U038",
-            "U041"
+            "U037",
+            "U050"
         ],
         [
             "U038",
             "U050"
+        ],
+        [
+            "U038",
+            "U041"
         ],
         [
             "U039",
@@ -816,11 +1387,11 @@
         ],
         [
             "U042",
-            "U043"
+            "U047"
         ],
         [
             "U042",
-            "U047"
+            "U043"
         ],
         [
             "U044",
@@ -832,7 +1403,7 @@
         ],
         [
             "U045",
-            "U050"
+            "U053"
         ],
         [
             "U045",
@@ -844,7 +1415,7 @@
         ],
         [
             "U045",
-            "U053"
+            "U050"
         ],
         [
             "U046",
@@ -861,7 +1432,507 @@
         [
             "U052",
             "U053"
+        ],
+        [
+            "U054",
+            "U073"
+        ],
+        [
+            "U054",
+            "U102"
+        ],
+        [
+            "U054",
+            "U084"
+        ],
+        [
+            "U055",
+            "U085"
+        ],
+        [
+            "U055",
+            "U093"
+        ],
+        [
+            "U055",
+            "U059"
+        ],
+        [
+            "U055",
+            "U063"
+        ],
+        [
+            "U055",
+            "U102"
+        ],
+        [
+            "U055",
+            "U091"
+        ],
+        [
+            "U055",
+            "U084"
+        ],
+        [
+            "U055",
+            "U088"
+        ],
+        [
+            "U056",
+            "U069"
+        ],
+        [
+            "U056",
+            "U095"
+        ],
+        [
+            "U057",
+            "U083"
+        ],
+        [
+            "U057",
+            "U065"
+        ],
+        [
+            "U057",
+            "U080"
+        ],
+        [
+            "U057",
+            "U076"
+        ],
+        [
+            "U058",
+            "U066"
+        ],
+        [
+            "U058",
+            "U103"
+        ],
+        [
+            "U058",
+            "U080"
+        ],
+        [
+            "U058",
+            "U082"
+        ],
+        [
+            "U059",
+            "U072"
+        ],
+        [
+            "U059",
+            "U075"
+        ],
+        [
+            "U059",
+            "U070"
+        ],
+        [
+            "U059",
+            "U088"
+        ],
+        [
+            "U060",
+            "U103"
+        ],
+        [
+            "U060",
+            "U073"
+        ],
+        [
+            "U061",
+            "U099"
+        ],
+        [
+            "U061",
+            "U083"
+        ],
+        [
+            "U061",
+            "U096"
+        ],
+        [
+            "U062",
+            "U093"
+        ],
+        [
+            "U062",
+            "U083"
+        ],
+        [
+            "U062",
+            "U063"
+        ],
+        [
+            "U062",
+            "U084"
+        ],
+        [
+            "U062",
+            "U089"
+        ],
+        [
+            "U063",
+            "U098"
+        ],
+        [
+            "U063",
+            "U069"
+        ],
+        [
+            "U064",
+            "U082"
+        ],
+        [
+            "U064",
+            "U103"
+        ],
+        [
+            "U064",
+            "U083"
+        ],
+        [
+            "U064",
+            "U096"
+        ],
+        [
+            "U064",
+            "U077"
+        ],
+        [
+            "U065",
+            "U093"
+        ],
+        [
+            "U065",
+            "U068"
+        ],
+        [
+            "U066",
+            "U069"
+        ],
+        [
+            "U066",
+            "U099"
+        ],
+        [
+            "U066",
+            "U080"
+        ],
+        [
+            "U066",
+            "U068"
+        ],
+        [
+            "U067",
+            "U074"
+        ],
+        [
+            "U067",
+            "U072"
+        ],
+        [
+            "U067",
+            "U099"
+        ],
+        [
+            "U067",
+            "U080"
+        ],
+        [
+            "U067",
+            "U090"
+        ],
+        [
+            "U067",
+            "U086"
+        ],
+        [
+            "U068",
+            "U095"
+        ],
+        [
+            "U068",
+            "U085"
+        ],
+        [
+            "U068",
+            "U092"
+        ],
+        [
+            "U068",
+            "U078"
+        ],
+        [
+            "U069",
+            "U102"
+        ],
+        [
+            "U069",
+            "U071"
+        ],
+        [
+            "U069",
+            "U089"
+        ],
+        [
+            "U070",
+            "U103"
+        ],
+        [
+            "U070",
+            "U082"
+        ],
+        [
+            "U070",
+            "U078"
+        ],
+        [
+            "U071",
+            "U094"
+        ],
+        [
+            "U071",
+            "U081"
+        ],
+        [
+            "U071",
+            "U078"
+        ],
+        [
+            "U072",
+            "U098"
+        ],
+        [
+            "U072",
+            "U099"
+        ],
+        [
+            "U073",
+            "U097"
+        ],
+        [
+            "U073",
+            "U076"
+        ],
+        [
+            "U073",
+            "U090"
+        ],
+        [
+            "U073",
+            "U086"
+        ],
+        [
+            "U073",
+            "U100"
+        ],
+        [
+            "U074",
+            "U093"
+        ],
+        [
+            "U074",
+            "U083"
+        ],
+        [
+            "U074",
+            "U102"
+        ],
+        [
+            "U074",
+            "U075"
+        ],
+        [
+            "U074",
+            "U079"
+        ],
+        [
+            "U075",
+            "U080"
+        ],
+        [
+            "U075",
+            "U102"
+        ],
+        [
+            "U075",
+            "U096"
+        ],
+        [
+            "U075",
+            "U078"
+        ],
+        [
+            "U078",
+            "U097"
+        ],
+        [
+            "U078",
+            "U090"
+        ],
+        [
+            "U078",
+            "U098"
+        ],
+        [
+            "U078",
+            "U103"
+        ],
+        [
+            "U078",
+            "U102"
+        ],
+        [
+            "U078",
+            "U096"
+        ],
+        [
+            "U079",
+            "U085"
+        ],
+        [
+            "U079",
+            "U100"
+        ],
+        [
+            "U079",
+            "U099"
+        ],
+        [
+            "U079",
+            "U091"
+        ],
+        [
+            "U079",
+            "U089"
+        ],
+        [
+            "U080",
+            "U083"
+        ],
+        [
+            "U080",
+            "U102"
+        ],
+        [
+            "U080",
+            "U096"
+        ],
+        [
+            "U080",
+            "U088"
+        ],
+        [
+            "U081",
+            "U095"
+        ],
+        [
+            "U081",
+            "U103"
+        ],
+        [
+            "U081",
+            "U091"
+        ],
+        [
+            "U081",
+            "U089"
+        ],
+        [
+            "U082",
+            "U097"
+        ],
+        [
+            "U082",
+            "U093"
+        ],
+        [
+            "U083",
+            "U098"
+        ],
+        [
+            "U083",
+            "U088"
+        ],
+        [
+            "U084",
+            "U101"
+        ],
+        [
+            "U084",
+            "U093"
+        ],
+        [
+            "U085",
+            "U094"
+        ],
+        [
+            "U086",
+            "U096"
+        ],
+        [
+            "U086",
+            "U100"
+        ],
+        [
+            "U087",
+            "U098"
+        ],
+        [
+            "U087",
+            "U096"
+        ],
+        [
+            "U087",
+            "U103"
+        ],
+        [
+            "U088",
+            "U101"
+        ],
+        [
+            "U089",
+            "U092"
+        ],
+        [
+            "U090",
+            "U094"
+        ],
+        [
+            "U090",
+            "U096"
+        ],
+        [
+            "U091",
+            "U098"
+        ],
+        [
+            "U092",
+            "U095"
+        ],
+        [
+            "U092",
+            "U101"
+        ],
+        [
+            "U093",
+            "U094"
+        ],
+        [
+            "U095",
+            "U098"
+        ],
+        [
+            "U096",
+            "U097"
+        ],
+        [
+            "U097",
+            "U101"
         ]
     ],
-    "exported_at": "2026-07-25T21:08:51.453042"
+    "exported_at": "2026-07-25T21:46:31.215240"
 }
