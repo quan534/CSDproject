@@ -185,16 +185,28 @@ class AVLTree:
         return self._balance_node(node)
 
     
-    def inorder(self) -> list[User]:
+    def inorder(self) -> list:
         result = []
+        # Bước 1: Duyệt cây lấy dữ liệu thô (gọi từ root)
+        # Lưu ý: Đảm bảo class của bạn có thuộc tính self.root
         self._inorder_recursive(self.root, result)
+        
+        # Bước 2: Sắp xếp kết quả ở bước cuối
+        # LƯU Ý QUAN TRỌNG: Hãy mở comment dòng tương ứng với cấu trúc dữ liệu của bạn!
+        
+        # NẾU node.users lưu TUPLE dạng (tên, User_Object):
+        result.sort(key=lambda item: item[0]) 
+        
+        # NẾU node.users lưu OBJECT chứa thuộc tính 'name' (hoặc 'ho_ten'):
+        # result.sort(key=lambda user: user.name) 
+        
         return result
 
     def _inorder_recursive(self, node, result):
         if not node:
             return
         self._inorder_recursive(node.left, result)
-        result.extend(node.users)  # Đổ toàn bộ danh sách đối tượng tại node này vào kết quả
+        result.extend(node.users)  # Đổ toàn bộ danh sách tại node này vào
         self._inorder_recursive(node.right, result)
         
     def search_exact(self, full_name: str) -> list:
