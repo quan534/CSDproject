@@ -187,18 +187,26 @@ class AVLTree:
     
     def inorder(self) -> list:
         result = []
-        # Bước 1: Duyệt cây lấy dữ liệu thô (gọi từ root)
-        # Lưu ý: Đảm bảo class của bạn có thuộc tính self.root
+        # Bước 1: Duyệt cây lấy dữ liệu thô
         self._inorder_recursive(self.root, result)
         
-        # Bước 2: Sắp xếp kết quả ở bước cuối
-        # LƯU Ý QUAN TRỌNG: Hãy mở comment dòng tương ứng với cấu trúc dữ liệu của bạn!
-        
-        # NẾU node.users lưu TUPLE dạng (tên, User_Object):
-        result.sort(key=lambda item: item[0]) 
-        
-        # NẾU node.users lưu OBJECT chứa thuộc tính 'name' (hoặc 'ho_ten'):
-        # result.sort(key=lambda user: user.name) 
+        # Bước 2: Định nghĩa hàm tạo key sắp xếp ưu tiên TÊN trước, HỌ VÀ TÊN LÓT sau
+        def get_sort_key(user):
+            # Lấy chuỗi họ tên từ đối tượng user (đổi .name thành .full_name nếu class User dùng tên đó)
+            full_name = user.name.strip()
+            parts = full_name.split()
+            
+            if not parts:
+                return ("", "")
+            
+            first_name = parts[-1]               # Tên chính (từ cuối cùng: An, Bình,...)
+            middle_and_last = " ".join(parts[:-1]) # Họ và tên lót (Hoàng Văn, Lê Ngọc,...)
+            
+            # Python sẽ so sánh first_name trước; nếu trùng nhau mới so sánh middle_and_last
+            return (first_name, middle_and_last)
+
+        # Bước 3: Sắp xếp lại toàn bộ mảng kết quả cuối cùng
+        result.sort(key=get_sort_key)
         
         return result
 
@@ -206,7 +214,7 @@ class AVLTree:
         if not node:
             return
         self._inorder_recursive(node.left, result)
-        result.extend(node.users)  # Đổ toàn bộ danh sách tại node này vào
+        result.extend(node.users)  
         self._inorder_recursive(node.right, result)
         
     def search_exact(self, full_name: str) -> list:
