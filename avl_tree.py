@@ -1,6 +1,29 @@
 import unicodedata
 from models import User
 
+def _normalize_name(name: str) -> str:
+    """Chuẩn hóa tiếng Việt (NFC), xóa khoảng trắng thừa và đưa về chữ thường."""
+    if not name:
+        return ""
+    return unicodedata.normalize('NFC', name).strip().lower()
+
+def _get_sort_key_name_first(user: User):
+    """
+    Tạo Key sắp xếp ưu tiên:
+    1. Tên chính (từ cuối cùng)
+    2. Họ và tên lót (các từ phía trước)
+    3. ID người dùng (để đảm bảo tính duy nhất và ổn định)
+    """
+    normalized = _normalize_name(user.name)
+    parts = normalized.split()
+    
+    if not parts:
+        return ("", "", str(user.user_id))
+    
+    first_name = parts[-1]                      # Tên chính (VD: "an", "bình")
+    middle_and_last = " ".join(parts[:-1])        # Họ và tên lót (VD: "nguyễn văn")
+    
+    return (first_name, middle_and_last, str(user.user_id))
 
 def extract_last_name(full_name: str) -> str:
     """ Trích xuất từ cuối cùng của họ tên và chuẩn hóa chữ thường """
