@@ -128,6 +128,7 @@ class AVLTree:
         else:
             # Gặp người trùng tên chính: Chỉ thêm đối tượng vào mảng có sẵn
             node.users.append(user)
+            node.users.sort(key=_get_sort_key_name_first)
             return node
 
         return self._balance_node(node)
