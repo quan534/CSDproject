@@ -19,6 +19,7 @@ def main():
         7. shell.run()
     """
     user_manager      = UserManager()
+    print('gay')
     suggestion_engine = SuggestionEngine(user_manager)
     analytics         = NetworkAnalytics(user_manager)
     data_manager      = DataManager(user_manager)
