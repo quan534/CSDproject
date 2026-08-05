@@ -18,7 +18,7 @@ def main():
         6. CLIShell(tất cả components trên)
         7. shell.run()
     """
-    user_manager      = UserManager()
+    gay_manager      = UserManager()
     suggestion_engine = SuggestionEngine(user_manager)
     analytics         = NetworkAnalytics(user_manager)
     data_manager      = DataManager(user_manager)
